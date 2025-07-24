@@ -1,0 +1,16 @@
+# === Ignore node_modules folders ===
+backend/node_modules/
+frontend/node_modules/
+
+# === Ignore environment variables ===
+backend/.env
+frontend/.env
+.env
+
+# === Ignore system and log files ===
+*.log
+.DS_Store
+
+# === Optional: IDE/Editor folders ===
+.vscode/
+.idea/
