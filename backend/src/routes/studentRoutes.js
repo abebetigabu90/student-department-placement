@@ -1,10 +1,10 @@
 import express from 'express';
 import {
   getStudents,
-  getStudentById,
+  getStudentByStudentId,
   createStudent,
-  updateStudent,
-  deleteStudent,
+  updateStudentByStudentId,
+  deleteStudentByStudentId,
 } from '../controllers/studentController.js';
 
 const router = express.Router();
@@ -13,9 +13,9 @@ router.route('/')
   .get(getStudents)
   .post(createStudent);
 
-router.route('/:id')
-  .get(getStudentById)
-  .put(updateStudent)
-  .delete(deleteStudent);
+router.route('/:studentId')
+  .get(getStudentByStudentId)
+  .put(updateStudentByStudentId)
+  .delete(deleteStudentByStudentId);
 
 export default router;
