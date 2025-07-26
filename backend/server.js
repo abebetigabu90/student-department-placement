@@ -1,13 +1,4 @@
-// Project: Online Department Placement System (ODPS)
-// Stack: MERN (MongoDB, Express.js, React.js, Node.js)
-
-// === PROJECT SETUP ===
-// This canvas will help us organize and build the full MERN project step by step.
-// Each section will focus on a specific component or feature.
-
-// === STEP 1: BACKEND SERVER SETUP (Express with ES Modules) ===
-// File: backend/server.js
-
+import studentRoutes from './src/routes/studentRoutes.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -18,7 +9,7 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+app.use('/api/students', studentRoutes);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
