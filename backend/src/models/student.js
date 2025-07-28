@@ -2,6 +2,11 @@
 import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema({
+  studentId: {
+    type: String,
+    required: true,
+    unique: true,
+  },
   fullName: {
     type: String,
     required: true,
