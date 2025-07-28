@@ -1,34 +1,10 @@
+// models/Student.js
 import mongoose from 'mongoose';
 
-const allowedRegions = [
-  'Afar', 'Amhara', 'Tigray', 'Oromia', 'Gambela', 
-  'Somali', 'SNNPR', 'Benishangul', 'Addis Ababa', 'Harari'
-];
-
 const studentSchema = new mongoose.Schema({
-  firstName: {
+  fullName: {
     type: String,
     required: true,
-    trim: true,
-    minlength: 2,
-  },
-  middleName: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 2,
-  },
-  lastName: {
-    type: String,
-    required: true,
-    trim: true,
-    minlength: 2,
-  },
-  studentId: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
   },
   gender: {
     type: String,
@@ -38,46 +14,41 @@ const studentSchema = new mongoose.Schema({
   region: {
     type: String,
     required: true,
-    trim: true,
-    validate: {
-      validator: v => allowedRegions.includes(v),
-      message: props => `${props.value} is not a valid region.`,
-    },
-  },
-  disabilityStatus: {
-    type: Boolean,
-    default: false,
-  },
-  GPA: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 4.0,
   },
   entranceScore: {
     type: Number,
     required: true,
-    min: 0,
-    max: 700, // adjust if needed
   },
-  departmentPreference: {
-    type: [String],
+  gpa: {
+    type: Number,
     required: true,
-    validate: {
-      validator: arr => arr.length > 0,
-      message: 'At least one department preference is required.',
-    },
   },
-  isPlaced: {
+  disability: {
+    type: String, // Example: 'Visual', 'Hearing', 'None'
+    default: 'None',
+  },
+  disabilityVerified: {
     type: Boolean,
     default: false,
   },
-  placedDepartment: {
-    type: String,
-    default: '',
+  preferences: [
+    {
+      department: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Department',
+        required: true,
+      },
+      rank: {
+        type: Number,
+        required: true,
+      },
+    },
+  ],
+  finalDepartment: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
   },
-}, { timestamps: true });
+});
 
 const Student = mongoose.model('Student', studentSchema);
-
 export default Student;

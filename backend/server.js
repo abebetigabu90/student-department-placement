@@ -1,4 +1,5 @@
 import studentRoutes from './src/routes/studentRoutes.js';
+import departmentRoutes from './src/routes/departmentRoutes.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -10,6 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/api/students', studentRoutes);
+app.use('/api/departments', departmentRoutes);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
