@@ -1,8 +1,7 @@
 import Student from '../models/Student.js';
-
-// @desc    Get all students
-// @route   GET /api/students
-// @access  Admin
+import Department from '../models/Department.js';
+import csv from 'csv-parser';
+import fs from 'fs';
 export const getStudents = async (req, res) => {
   try {
     const students = await Student.find();
@@ -11,10 +10,6 @@ export const getStudents = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching students' });
   }
 };
-
-// @desc    Get student by studentId
-// @route   GET /api/students/:studentId
-// @access  Admin or student
 export const getStudentByStudentId = async (req, res) => {
   try {
     const student = await Student.findOne({ studentId: req.params.studentId });
@@ -26,28 +21,100 @@ export const getStudentByStudentId = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching student' });
   }
 };
+// the ff code is used to create students by bulk upload by the admin
+export const uploadStudentCSV = async (req, res) => {
+  try {
+    const results = [];
 
-// @desc    Create a new student
-// @route   POST /api/students
-// @access  Admin only
+    fs.createReadStream(req.file.path)
+      .pipe(csv())
+      .on('data', (data) => {
+        results.push(data);
+      })
+      .on('end', async () => {
+        const inserted = await Student.insertMany(results);
+        fs.unlinkSync(req.file.path); // delete file after processing
+        res.status(201).json({
+          message: `${inserted.length} students uploaded successfully.`,
+          data: inserted,
+        });
+      });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed', error: error.message });
+  }
+};
+//the ff code is used to create a student manually by the admin
 export const createStudent = async (req, res) => {
   try {
-    // Optionally check if studentId already exists to avoid duplicates
-    const existing = await Student.findOne({ studentId: req.body.studentId });
-    if (existing) {
-      return res.status(400).json({ message: 'Student ID already exists' });
+    const {
+      studentId,
+      fullName,
+      gender,
+      region,
+      entranceScore,
+      gpa,
+      disability,
+      disabilityVerified,
+    } = req.body;
+
+    const studentExists = await Student.findOne({ studentId });
+    if (studentExists) {
+      return res.status(400).json({ message: 'Student already exists' });
     }
-    const student = new Student(req.body);
-    const createdStudent = await student.save();
-    res.status(201).json(createdStudent);
+
+    const student = new Student({
+      studentId,
+      fullName,
+      gender,
+      region,
+      entranceScore,
+      gpa,
+      disability,
+      disabilityVerified,
+    });
+
+    await student.save();
+    res.status(201).json({ message: 'Student created successfully', student });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// @desc    Update a student by studentId
-// @route   PUT /api/students/:studentId
-// @access  Admin only
+//code for department preference by the student
+export const updateStudentPreferences = async (req, res) => {
+  const { studentId } = req.params;
+  const { preferences } = req.body;
+
+  try {
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Convert department names to ObjectIds
+    const departmentDocs = await Promise.all(
+      preferences.map(name => Department.findOne({ name }))
+    );
+
+    const missing = departmentDocs.filter(dep => !dep);
+    if (missing.length > 0) {
+      return res.status(400).json({ message: 'One or more departments not found' });
+    }
+
+    student.preferences = departmentDocs.map(dep => dep._id);
+    await student.save();
+
+    res.status(200).json({
+      message: 'Preferences updated successfully',
+      preferences: departmentDocs.map(dep => dep.name), // return readable names
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
 export const updateStudentByStudentId = async (req, res) => {
   try {
     const student = await Student.findOne({ studentId: req.params.studentId });
@@ -62,10 +129,6 @@ export const updateStudentByStudentId = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
-
-// @desc    Delete a student by studentId
-// @route   DELETE /api/students/:studentId
-// @access  Admin only
 export const deleteStudentByStudentId = async (req, res) => {
   try {
     const student = await Student.findOne({ studentId: req.params.studentId });

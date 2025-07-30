@@ -1,4 +1,3 @@
-// models/Student.js
 import mongoose from 'mongoose';
 
 const studentSchema = new mongoose.Schema({
@@ -29,31 +28,21 @@ const studentSchema = new mongoose.Schema({
     required: true,
   },
   disability: {
-    type: String, // Example: 'Visual', 'Hearing', 'None'
+    type: String,
     default: 'None',
   },
   disabilityVerified: {
     type: Boolean,
     default: false,
   },
-  preferences: [
-    {
-      department: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Department',
-        required: true,
-      },
-      rank: {
-        type: Number,
-        required: true,
-      },
-    },
-  ],
+  preferences: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Department',
+  }],
   finalDepartment: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Department',
   },
 });
 
-const Student = mongoose.model('Student', studentSchema);
-export default Student;
+export default mongoose.model('Student', studentSchema);
