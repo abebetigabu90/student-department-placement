@@ -1,16 +1,7 @@
-import mongoose from 'mongoose';
-
+import mongoose from 'mongoose'
 const departmentSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  quota: {
-    type: Number,
-    required: true,
-  },
+  name:     { type: String, required: true, unique: true },
+  capacity: { type: Number, required: true }
 });
 
-const Department = mongoose.model('Department', departmentSchema);
-export default Department;
+export default mongoose.model('Department', departmentSchema);

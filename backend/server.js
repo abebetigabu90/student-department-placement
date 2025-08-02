@@ -1,6 +1,8 @@
 import studentRoutes from './src/routes/studentRoutes.js';
 import departmentRoutes from './src/routes/departmentRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
+import studentsRouter from './src/routes/students.js';
+import placementRouter from './src/routes/placement.js';
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use('/api/admin', adminRoutes);
 app.use('/api/students', studentRoutes);
 app.use('/api/departments', departmentRoutes);
+app.use('/api/students', studentsRouter);
+app.use('/api/placement', placementRouter);
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
