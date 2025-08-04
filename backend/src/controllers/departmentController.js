@@ -2,8 +2,8 @@ import Department from '../models/Department.js';
 // Create a new department
 export const createDepartment = async (req, res) => {
   try {
-    const { name, quota } = req.body;
-    const department = new Department({ name, quota });
+    const { name, capacity } = req.body;
+    const department = new Department({ name, capacity });
     await department.save();
     res.status(201).json(department);
   } catch (err) {

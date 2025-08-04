@@ -52,9 +52,11 @@ export const createStudent = async (req, res) => {
       gender,
       region,
       entranceScore,
+      entranceMax,
       gpa,
       disability,
       disabilityVerified,
+      preferences 
     } = req.body;
 
     const studentExists = await Student.findOne({ studentId });
@@ -68,9 +70,11 @@ export const createStudent = async (req, res) => {
       gender,
       region,
       entranceScore,
+      entranceMax: entranceMax || 600, // default to 600 if not provided
       gpa,
       disability,
       disabilityVerified,
+      preferences 
     });
 
     await student.save();
