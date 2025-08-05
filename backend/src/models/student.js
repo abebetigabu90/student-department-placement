@@ -35,8 +35,7 @@ const studentSchema = new mongoose.Schema({
     default: false,
   },
   preferences: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Department',
+    type: String,  // Store department names directly (case-insensitive)
   }],
   entranceMax:       { type: Number, required: true },    // 600 or 700
   semester1GPA:      { type: Number },                    // set after Sem 1

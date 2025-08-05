@@ -49,7 +49,7 @@ export const runPlacement = async (req, res) => {
     console.log('🚀 Starting placement algorithm...');
     
     // Get all students and departments
-    const students = await Student.find().populate('preferences');
+    const students = await Student.find();
     const departments = await Department.find();
     
     if (students.length === 0) {
@@ -62,12 +62,46 @@ export const runPlacement = async (req, res) => {
     
     console.log(`📊 Processing ${students.length} students for ${departments.length} departments`);
     
+    // Debug: Log student data
+    console.log('👥 Students found:');
+    students.forEach(student => {
+      console.log(`- ${student.fullName}: preferences = [${student.preferences?.join(', ') || 'NONE'}]`);
+    });
+    
+    // Debug: Log department data
+    console.log('🏢 Departments found:');
+    departments.forEach(dept => {
+      console.log(`- ${dept.name}: capacity = ${dept.capacity}`);
+    });
+    
+    // Create department name mapping for case-insensitive lookup
+    const departmentMap = {};
+    departments.forEach(dept => {
+      departmentMap[dept.name.toLowerCase()] = dept.name;
+    });
+    
+    console.log('🗺️ Department mapping:', departmentMap);
+    
     // Phase 1: Calculate scores and prepare for placement
     const studentsWithScores = students.map(student => {
       const scores = calculateTotalScore(student);
+      
+      // Convert preferences to proper department names (case-insensitive)
+      const validPreferences = (student.preferences || [])
+        .map(pref => {
+          const normalizedPref = pref.toLowerCase();
+          const mappedDept = departmentMap[normalizedPref];
+          console.log(`🔍 Mapping preference "${pref}" -> "${mappedDept}"`);
+          return mappedDept || null;
+        })
+        .filter(pref => pref !== null);
+      
+      console.log(`📋 ${student.fullName}: Valid preferences = [${validPreferences.join(', ')}]`);
+      
       return {
         ...student.toObject(),
         ...scores,
+        preferences: validPreferences,
         placed: false,
         assignedDepartment: null
       };
@@ -75,6 +109,11 @@ export const runPlacement = async (req, res) => {
     
     // Sort students by total score (highest first)
     studentsWithScores.sort((a, b) => b.totalScore - a.totalScore);
+    
+    console.log('🏆 Students ranked by score:');
+    studentsWithScores.forEach((student, index) => {
+      console.log(`${index + 1}. ${student.fullName}: ${student.totalScore} points, preferences: [${student.preferences.join(', ')}]`);
+    });
     
     // Initialize department tracking
     const departmentPlacements = {};
@@ -93,10 +132,14 @@ export const runPlacement = async (req, res) => {
     for (const student of studentsWithScores) {
       if (student.placed) continue;
       
+      console.log(`\n🎯 Trying to place: ${student.fullName} (Score: ${student.totalScore})`);
+      console.log(`   Preferences: [${student.preferences.join(', ')}]`);
+      
       // Try to place student in their preferred departments
-      for (const prefDept of student.preferences) {
-        const deptName = prefDept.name;
+      for (const deptName of student.preferences) {
         const deptPlacement = departmentPlacements[deptName];
+        
+        console.log(`   Checking ${deptName}: ${deptPlacement?.students.length || 0}/${deptPlacement?.capacity || 0} filled`);
         
         if (deptPlacement && deptPlacement.students.length < deptPlacement.capacity) {
           // Place student in this department
@@ -109,70 +152,94 @@ export const runPlacement = async (req, res) => {
           
           student.placed = true;
           student.assignedDepartment = deptName;
+          console.log(`✅ Placed ${student.fullName} in ${deptName} (Score: ${student.totalScore})`);
           break;
+        } else {
+          console.log(`   ❌ ${deptName} is full or doesn't exist`);
         }
+      }
+      
+      if (!student.placed) {
+        console.log(`   ⚠️ Could not place ${student.fullName} - no available spots in preferred departments`);
       }
     }
     
-    console.log('👩 Phase 2: Female quota check (20% rule)...');
+    console.log('👩 Phase 2: Female quota enforcement (20% rule)...');
     
-    // Phase 2: Female quota adjustment
+    // Phase 2: Female quota enforcement
     for (const [deptName, deptPlacement] of Object.entries(departmentPlacements)) {
       const totalPlaced = deptPlacement.students.length;
-      const femaleRatio = totalPlaced > 0 ? deptPlacement.femaleCount / totalPlaced : 0;
       
-      console.log(`📊 ${deptName}: ${deptPlacement.femaleCount}/${totalPlaced} females (${Math.round(femaleRatio * 100)}%)`);
+      if (totalPlaced === 0) continue; // Skip empty departments
       
-      if (femaleRatio < 0.20 && totalPlaced > 0) {
-        const neededFemales = Math.ceil(totalPlaced * 0.20) - deptPlacement.femaleCount;
+      const femaleRatio = deptPlacement.femaleCount / totalPlaced;
+      const targetFemales = Math.ceil(totalPlaced * 0.20); // At least 20%
+      const currentFemales = deptPlacement.femaleCount;
+      
+      console.log(`📊 ${deptName}: ${currentFemales}/${totalPlaced} females (${Math.round(femaleRatio * 100)}%), Target: ${targetFemales}`);
+      
+      if (currentFemales < targetFemales) {
+        const neededFemales = targetFemales - currentFemales;
         console.log(`🎯 ${deptName} needs ${neededFemales} more females for 20% quota`);
         
         // Find unplaced females who wanted this department
         const availableFemales = studentsWithScores.filter(student => 
           !student.placed && 
           student.gender === 'Female' &&
-          student.preferences.some(pref => pref.name === deptName)
+          student.preferences.includes(deptName)
         );
         
         // Sort available females by total score (highest first)
         availableFemales.sort((a, b) => b.totalScore - a.totalScore);
         
-        // Phase 3: Rebalancing - replace lowest scoring males with highest scoring females
-        let femalesAdded = 0;
-        for (let i = 0; i < Math.min(neededFemales, availableFemales.length); i++) {
-          const femaleToAdd = availableFemales[i];
-          
-          // Find lowest scoring male in this department
-          const malesInDept = deptPlacement.students.filter(s => s.gender === 'Male');
-          if (malesInDept.length > 0) {
-            malesInDept.sort((a, b) => a.totalScore - b.totalScore); // lowest first
-            const lowestMale = malesInDept[0];
-            
-            // Only replace if female has higher score than lowest male
-            if (femaleToAdd.totalScore > lowestMale.totalScore) {
-              // Remove male
-              const maleIndex = deptPlacement.students.findIndex(s => s.studentId === lowestMale.studentId);
-              deptPlacement.students.splice(maleIndex, 1);
-              deptPlacement.maleCount--;
-              
-              // Mark male as unplaced
-              const originalMale = studentsWithScores.find(s => s.studentId === lowestMale.studentId);
-              originalMale.placed = false;
-              originalMale.assignedDepartment = null;
-              
-              // Add female
-              deptPlacement.students.push(femaleToAdd);
-              deptPlacement.femaleCount++;
-              femaleToAdd.placed = true;
-              femaleToAdd.assignedDepartment = deptName;
-              
-              femalesAdded++;
-              console.log(`🔄 Replaced ${lowestMale.fullName} (${lowestMale.totalScore}) with ${femaleToAdd.fullName} (${femaleToAdd.totalScore}) in ${deptName}`);
-            }
-          }
+        console.log(`👥 Found ${availableFemales.length} unplaced females who wanted ${deptName}`);
+        
+        if (availableFemales.length === 0) {
+          console.log(`⚠️ No unplaced females available who wanted ${deptName}`);
+          continue;
         }
         
-        console.log(`✅ Added ${femalesAdded} females to ${deptName} via rebalancing`);
+        // Get males in this department sorted by score (lowest first)
+        const malesInDept = deptPlacement.students.filter(s => s.gender === 'Male');
+        malesInDept.sort((a, b) => a.totalScore - b.totalScore); // lowest first
+        
+        console.log(`👨 Males in ${deptName}:`, malesInDept.map(m => `${m.fullName}(${m.totalScore})`));
+        
+        // Rebalancing: Replace lowest-scoring males with highest-scoring available females
+        let femalesAdded = 0;
+        const replacementsNeeded = Math.min(neededFemales, availableFemales.length, malesInDept.length);
+        
+        for (let i = 0; i < replacementsNeeded; i++) {
+          const femaleToAdd = availableFemales[i];
+          const maleToRemove = malesInDept[i]; // Take lowest scoring male
+          
+          // Remove male from department
+          const maleIndex = deptPlacement.students.findIndex(s => s.studentId === maleToRemove.studentId);
+          deptPlacement.students.splice(maleIndex, 1);
+          deptPlacement.maleCount--;
+          
+          // Mark male as unplaced in main array
+          const originalMale = studentsWithScores.find(s => s.studentId === maleToRemove.studentId);
+          originalMale.placed = false;
+          originalMale.assignedDepartment = null;
+          
+          // Add female to department
+          deptPlacement.students.push(femaleToAdd);
+          deptPlacement.femaleCount++;
+          femaleToAdd.placed = true;
+          femaleToAdd.assignedDepartment = deptName;
+          
+          femalesAdded++;
+          console.log(`🔄 Replaced ${maleToRemove.fullName} (${maleToRemove.totalScore}) with ${femaleToAdd.fullName} (${femaleToAdd.totalScore}) in ${deptName}`);
+        }
+        
+        console.log(`✅ Added ${femalesAdded} females to ${deptName} via quota enforcement`);
+        
+        // Update final counts
+        const finalFemaleRatio = deptPlacement.femaleCount / deptPlacement.students.length;
+        console.log(`📈 ${deptName} final: ${deptPlacement.femaleCount}/${deptPlacement.students.length} females (${Math.round(finalFemaleRatio * 100)}%)`);
+      } else {
+        console.log(`✅ ${deptName} already meets 20% female quota`);
       }
     }
     
@@ -209,6 +276,7 @@ export const runPlacement = async (req, res) => {
     };
     
     console.log('🎉 Placement algorithm completed successfully!');
+    console.log('📊 Final Summary:', JSON.stringify(placementSummary, null, 2));
     
     res.status(200).json({
       message: 'Placement algorithm completed successfully',
@@ -228,7 +296,6 @@ export const runPlacement = async (req, res) => {
 export const getPlacementResults = async (req, res) => {
   try {
     const students = await Student.find({ assignedDepartment: { $ne: null } })
-      .populate('preferences')
       .sort({ totalScore: -1 });
     
     const departments = await Department.find();
@@ -251,7 +318,9 @@ export const getPlacementResults = async (req, res) => {
           region: student.region,
           totalScore: student.totalScore,
           gpa: student.gpa,
-          entranceScore: student.entranceScore
+          entranceScore: student.entranceScore,
+          disability: student.disability,
+          disabilityVerified: student.disabilityVerified
         });
       }
     });

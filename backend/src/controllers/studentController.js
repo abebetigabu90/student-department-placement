@@ -56,31 +56,58 @@ export const createStudent = async (req, res) => {
       gpa,
       disability,
       disabilityVerified,
-      preferences 
+      preferences = [] // optional: default to empty
     } = req.body;
 
+    // Check for duplicate student
     const studentExists = await Student.findOne({ studentId });
     if (studentExists) {
       return res.status(400).json({ message: 'Student already exists' });
     }
 
+    // Validate preferences if provided
+    let validatedPreferences = [];
+    if (preferences.length > 0) {
+      const departments = await Department.find();
+      const validNames = departments.map(d => d.name.toLowerCase());
+
+      const invalid = preferences.filter(p => !validNames.includes(p.toLowerCase()));
+      if (invalid.length > 0) {
+        return res.status(400).json({
+          message: 'Invalid department names in preferences',
+          invalidDepartments: invalid
+        });
+      }
+
+      // Keep original casing from input
+      validatedPreferences = preferences;
+    }
+
+    // Create the student
     const student = new Student({
       studentId,
       fullName,
       gender,
       region,
       entranceScore,
-      entranceMax: entranceMax || 600, // default to 600 if not provided
+      entranceMax: entranceMax || 600,
       gpa,
       disability,
       disabilityVerified,
-      preferences 
+      preferences: validatedPreferences
     });
 
     await student.save();
-    res.status(201).json({ message: 'Student created successfully', student });
+
+    res.status(201).json({
+      message: 'Student created successfully',
+      student
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({
+      message: 'Server error creating student',
+      error: error.message
+    });
   }
 };
 
@@ -95,22 +122,28 @@ export const updateStudentPreferences = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Convert department names to ObjectIds
-    const departmentDocs = await Promise.all(
-      preferences.map(name => Department.findOne({ name }))
+    // Validate that all departments exist (case-insensitive)
+    const departments = await Department.find();
+    const validDepartmentNames = departments.map(dept => dept.name.toLowerCase());
+    
+    const invalidPreferences = preferences.filter(pref => 
+      !validDepartmentNames.includes(pref.toLowerCase())
     );
 
-    const missing = departmentDocs.filter(dep => !dep);
-    if (missing.length > 0) {
-      return res.status(400).json({ message: 'One or more departments not found' });
+    if (invalidPreferences.length > 0) {
+      return res.status(400).json({ 
+        message: 'Invalid departments found', 
+        invalidDepartments: invalidPreferences 
+      });
     }
 
-    student.preferences = departmentDocs.map(dep => dep._id);
+    // Store department names directly (preserve original case from request)
+    student.preferences = preferences;
     await student.save();
 
     res.status(200).json({
       message: 'Preferences updated successfully',
-      preferences: departmentDocs.map(dep => dep.name), // return readable names
+      preferences: preferences,
     });
 
   } catch (error) {
