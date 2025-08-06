@@ -2,6 +2,8 @@ import Student from '../models/Student.js';
 import Department from '../models/Department.js';
 import csv from 'csv-parser';
 import fs from 'fs';
+import { CONFIG } from '../services/placementService.js';
+
 export const getStudents = async (req, res) => {
   try {
     const students = await Student.find();
@@ -54,9 +56,12 @@ export const createStudent = async (req, res) => {
       entranceScore,
       entranceMax,
       gpa,
+      semester1GPA,
+      semester2GPA,
+      cgpa,
       disability,
       disabilityVerified,
-      preferences = [] // optional: default to empty
+      preferences = [] // optional: default to empty - should be in priority order
     } = req.body;
 
     // Check for duplicate student
@@ -68,14 +73,19 @@ export const createStudent = async (req, res) => {
     // Validate preferences if provided
     let validatedPreferences = [];
     if (preferences.length > 0) {
-      const departments = await Department.find();
-      const validNames = departments.map(d => d.name.toLowerCase());
+      // For Semester 1, validate against all possible choices
+      const allChoices = [
+        'Medicine', 'Pharmacy', 'Computer Science', 'IT', 'Law',
+        'Engineering', 'Other Health', 'Agriculture and Statistics', 'Other Natural Science',
+        'Other Social Science'
+      ];
 
-      const invalid = preferences.filter(p => !validNames.includes(p.toLowerCase()));
+      const invalid = preferences.filter(p => !allChoices.includes(p));
       if (invalid.length > 0) {
         return res.status(400).json({
           message: 'Invalid department names in preferences',
-          invalidDepartments: invalid
+          invalidDepartments: invalid,
+          validChoices: allChoices
         });
       }
 
@@ -92,6 +102,9 @@ export const createStudent = async (req, res) => {
       entranceScore,
       entranceMax: entranceMax || 600,
       gpa,
+      semester1GPA,
+      semester2GPA,
+      cgpa,
       disability,
       disabilityVerified,
       preferences: validatedPreferences
@@ -122,22 +135,68 @@ export const updateStudentPreferences = async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // Validate that all departments exist (case-insensitive)
-    const departments = await Department.find();
-    const validDepartmentNames = departments.map(dept => dept.name.toLowerCase());
-    
-    const invalidPreferences = preferences.filter(pref => 
-      !validDepartmentNames.includes(pref.toLowerCase())
-    );
+    // Validate preferences based on placement stage
+    if (student.placementStage === 'admitted') {
+      // Semester 1 preferences
+      const allChoices = [
+        'Medicine', 'Pharmacy', 'Computer Science', 'IT', 'Law',
+        'Engineering', 'Other Health', 'Agriculture and Statistics', 'Other Natural Science',
+        'Other Social Science'
+      ];
+      
+      const invalidPreferences = preferences.filter(pref => 
+        !allChoices.includes(pref)
+      );
 
-    if (invalidPreferences.length > 0) {
-      return res.status(400).json({ 
-        message: 'Invalid departments found', 
-        invalidDepartments: invalidPreferences 
-      });
+      if (invalidPreferences.length > 0) {
+        return res.status(400).json({ 
+          message: 'Invalid preferences for Semester 1', 
+          invalidPreferences,
+          validChoices: allChoices
+        });
+      }
+    } else if (student.placementStage === 'after-sem1') {
+      // Semester 2 preferences - need to determine based on their Semester 1 choice
+      const semester1Choice = student.preferences[0]; // Their first choice from Semester 1
+      
+      if (CONFIG.finalDepartments.has(semester1Choice)) {
+        return res.status(400).json({ 
+          message: 'Student already placed in final department in Semester 1' 
+        });
+      }
+      
+      // Get available departments for their stream
+      const streamConfig = CONFIG.streams[semester1Choice];
+      if (!streamConfig) {
+        return res.status(400).json({ 
+          message: 'Invalid stream from Semester 1' 
+        });
+      }
+      
+      let availableDepartments = [];
+      if (streamConfig.nextStep === 'final') {
+        availableDepartments = streamConfig.departments;
+      } else {
+        // For sub-streams, return all possible departments
+        Object.values(streamConfig.sub).forEach(departments => {
+          availableDepartments.push(...departments);
+        });
+      }
+      
+      const invalidPreferences = preferences.filter(pref => 
+        !availableDepartments.includes(pref)
+      );
+
+      if (invalidPreferences.length > 0) {
+        return res.status(400).json({ 
+          message: 'Invalid preferences for your stream', 
+          invalidPreferences,
+          validChoices: availableDepartments
+        });
+      }
     }
 
-    // Store department names directly (preserve original case from request)
+    // Store preferences in priority order
     student.preferences = preferences;
     await student.save();
 

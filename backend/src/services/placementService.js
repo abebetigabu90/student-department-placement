@@ -1,8 +1,13 @@
 const EMERGING = new Set(['Afar','Benishangul-Gumuz','Gambella','Somali']);
+
+// Configuration for streams and departments
 export const CONFIG = {
+  // Final departments that can be chosen directly in Semester 1
   finalDepartments: new Set(['Medicine','Pharmacy','Computer Science','IT','Law']),
+  
+  // Semester 1 streams and their Semester 2 final departments
   streams: {
-    Engineering: {
+    'Engineering': {
       nextStep: 'final',
       departments: [
         'Civil Engineering', 'Mechanical Engineering', 'Electrical Engineering',
@@ -14,8 +19,8 @@ export const CONFIG = {
       nextStep: 'sub',
       sub: {
         'Computational Science': ['Biology','Chemistry','Mathematics','Physics','Sports Science','Statistics'],
-        'Other Health':            ['Anesthesia','Nursing','Midwifery'],
-        Agriculture:               ['Animal Science','Plant Science']
+        'Other Health': ['Anesthesia','Nursing','Midwifery'],
+        'Agriculture and Statistics': ['Animal Science','Plant Science','Agro-economics','Statistics']
       }
     },
     'Other Social Science': {
@@ -33,67 +38,124 @@ export const CONFIG = {
 };
 
 /** Compute bonus points based on gender, disability, and region */
-export function computeBonus({ gender, disabled, region }) {
-  let b = 0;
-  if (gender === 'female') b += 5;
-  if (disabled)         b += 5;
-  if (gender === 'female' && EMERGING.has(region)) b += 10;
-  if (disabled && EMERGING.has(region))         b += 10;
-  return b;
+export function computeBonus({ gender, disability, disabilityVerified, region }) {
+  let bonus = 0;
+  
+  // Female bonus: +5 points
+  if (gender === 'Female') {
+    bonus += 5;
+  }
+  
+  // Disability bonus: +5 points
+  if (disability && disability !== 'None' && disabilityVerified) {
+    bonus += 5;
+  }
+  
+  // Emerging region bonus: +5 points
+  if (EMERGING.has(region)) {
+    bonus += 5;
+  }
+  
+  return bonus;
 }
 
-/** Compute total score: GPA(50%) + entrance(20%) + bonus */
+/** Compute total score: GPA/CGPA(50%) + entrance(20%) + bonus */
 export function computeTotal({ gpa, entranceScore, entranceMax, bonus }) {
-  const gpaScore  = (gpa / 4) * 50;
+  const gpaScore = (gpa / 4.0) * 50;
   const examScore = (entranceScore / entranceMax) * 20;
-  return gpaScore + examScore + bonus;
+  return Math.round((gpaScore + examScore + bonus) * 100) / 100;
 }
 
-/** Determine placement for one student */
-export function runPlacement(student) {
-  const bonus = computeBonus(student);
-  student.bonusPoints = bonus;
+/** Determine if a student can be placed in Semester 1 */
+export function canPlaceSemester1(student) {
+  return student.semester1GPA != null && student.preferences && student.preferences.length > 0;
+}
 
-  if (student.semester1GPA == null) {
-    return { placed: false, reason: 'Waiting Sem1 GPA' };
+/** Determine if a student can be placed in Semester 2 */
+export function canPlaceSemester2(student) {
+  return student.semester2GPA != null && student.cgpa != null && student.preferences && student.preferences.length > 0;
+}
+
+/** Get available departments for a student based on their stream */
+export function getAvailableDepartments(student, placementStage) {
+  if (placementStage === 'after-sem1') {
+    // For Semester 1, return all possible choices
+    if (student.preferences && student.preferences.length > 0) {
+      return student.preferences;
+    }
+    return [];
   }
-
-  // Phase 1: direct final department
-  if (CONFIG.finalDepartments.has(student.initialPreference)) {
-    const score = computeTotal({
-      gpa: student.semester1GPA,
-      entranceScore: student.entranceScore,
-      entranceMax: student.entranceMax,
-      bonus
-    });
-    return { placed: true, stage: 'after-sem1', department: student.initialPreference, score };
+  
+  if (placementStage === 'after-sem2') {
+    // For Semester 2, need to determine based on their Semester 1 choice
+    if (!student.preferences || student.preferences.length === 0) {
+      return [];
+    }
+    
+    const semester1Choice = student.preferences[0]; // Their first choice from Semester 1
+    
+    // If they chose a final department in Semester 1, they're already placed
+    if (CONFIG.finalDepartments.has(semester1Choice)) {
+      return [];
+    }
+    
+    // If they chose a stream, get the available departments for that stream
+    const streamConfig = CONFIG.streams[semester1Choice];
+    if (!streamConfig) {
+      return [];
+    }
+    
+    if (streamConfig.nextStep === 'final') {
+      return streamConfig.departments;
+    } else {
+      // For sub-streams, we need to know which sub-stream they chose
+      // This would be stored in their preferences or we need to determine it
+      // For now, return all possible departments from all sub-streams
+      const allDepartments = [];
+      Object.values(streamConfig.sub).forEach(departments => {
+        allDepartments.push(...departments);
+      });
+      return allDepartments;
+    }
   }
+  
+  return [];
+}
 
-  // Phase 2: stream students need Sem2 and preferences
-  if (student.semester2GPA == null || !student.secondPreference || !student.preferences?.length) {
-    return { placed: false, reason: 'Waiting Sem2 data or preferences' };
+/** Validate preferences for a student */
+export function validatePreferences(student, placementStage) {
+  if (!student.preferences || student.preferences.length === 0) {
+    return { valid: false, reason: 'No preferences provided' };
   }
-
-  const cfg = CONFIG.streams[student.initialPreference];
-  if (!cfg) return { placed: false, reason: 'Invalid initial stream' };
-
-  let finalList;
-  if (cfg.nextStep === 'final') {
-    finalList = cfg.departments;
-  } else {
-    finalList = cfg.sub[student.secondPreference] || [];
+  
+  if (placementStage === 'after-sem1') {
+    // For Semester 1, validate against all possible choices
+    const allChoices = [
+      'Medicine', 'Pharmacy', 'Computer Science', 'IT', 'Law',
+      'Engineering', 'Other Health', 'Agriculture and Statistics', 'Other Natural Science',
+      'Other Social Science'
+    ];
+    
+    const invalidPreferences = student.preferences.filter(pref => 
+      !allChoices.includes(pref)
+    );
+    
+    if (invalidPreferences.length > 0) {
+      return { valid: false, reason: `Invalid preferences: ${invalidPreferences.join(', ')}` };
+    }
   }
-
-  const chosen = student.preferences.find(d => finalList.includes(d));
-  if (!chosen) return { placed: false, reason: 'No matching preference' };
-
-  const cumGPA = (student.semester1GPA + student.semester2GPA) / 2;
-  const score = computeTotal({
-    gpa: cumGPA,
-    entranceScore: student.entranceScore,
-    entranceMax: student.entranceMax,
-    bonus
-  });
-
-  return { placed: true, stage: 'after-sem2', department: chosen, score };
+  
+  if (placementStage === 'after-sem2') {
+    // For Semester 2, validate against available departments for their stream
+    const availableDepartments = getAvailableDepartments(student, placementStage);
+    const invalidPreferences = student.preferences.filter(pref => 
+      !availableDepartments.includes(pref)
+    );
+    
+    if (invalidPreferences.length > 0) {
+      return { valid: false, reason: `Invalid preferences for your stream: ${invalidPreferences.join(', ')}` };
+    }
+  }
+  
+  return { valid: true };
 }

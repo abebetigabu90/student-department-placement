@@ -35,11 +35,12 @@ const studentSchema = new mongoose.Schema({
     default: false,
   },
   preferences: [{
-    type: String,  // Store department names directly (case-insensitive)
+    type: String,  // Store department names in priority order (index 0 = Priority 1, index 1 = Priority 2, etc.)
   }],
   entranceMax:       { type: Number, required: true },    // 600 or 700
-  semester1GPA:      { type: Number },                    // set after Sem 1
-  semester2GPA:      { type: Number },                    // set after Sem 2
+  semester1GPA:      { type: Number },                    // set after Sem 1
+  semester2GPA:      { type: Number },                    // set after Sem 2
+  cgpa:              { type: Number },                    // provided by university system
 
   placementStage: {
     type: String,
