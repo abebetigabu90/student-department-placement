@@ -1,4 +1,4 @@
-import Student from '../models/Student.js';
+import Student from '../models/student.js';
 import Department from '../models/Department.js';
 import csv from 'csv-parser';
 import fs from 'fs';
