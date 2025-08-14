@@ -29,13 +29,12 @@ const Placement = () => {
       
       const eligibleSem1 = students.filter(s => 
         s.placementStage === 'admitted' && 
-        s.semester1GPA != null && 
+        s.gpa != null && 
         s.preferences?.length > 0
       ).length;
 
       const eligibleSem2 = students.filter(s => 
         s.placementStage === 'after-sem1' && 
-        s.semester2GPA != null && 
         s.cgpa != null && 
         s.preferences?.length > 0
       ).length;

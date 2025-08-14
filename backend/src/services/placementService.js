@@ -53,19 +53,18 @@ export function computeTotal({ gpa, entranceScore, entranceMax, bonus }) {
   return Math.round((gpaScore + examScore + bonus) * 100) / 100;
 }
 
-/** Determine if a student can be placed in Semester 1 */
+/** Determine if a student can be placed in Semester 1 (uses GPA) */
 export function canPlaceSemester1(student) {
   return (
-    student.semester1GPA != null &&
+    student.gpa != null &&
     Array.isArray(student.preferences) &&
     student.preferences.length > 0
   );
 }
 
-/** Determine if a student can be placed in Semester 2 */
+/** Determine if a student can be placed in Semester 2 (uses CGPA) */
 export function canPlaceSemester2(student) {
   return (
-    student.semester2GPA != null &&
     student.cgpa != null &&
     Array.isArray(student.preferences) &&
     student.preferences.length > 0

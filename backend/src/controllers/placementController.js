@@ -11,7 +11,7 @@ import {
 
 // Compute total score details for a given placement stage
 const calculateTotalScore = (student, placementStage) => {
-  const gpaToUse = placementStage === 'after-sem1' ? student.semester1GPA
+  const gpaToUse = placementStage === 'after-sem1' ? student.gpa
                    : placementStage === 'after-sem2' ? student.cgpa
                    : student.gpa;
   const bonus = computeBonus({
@@ -73,16 +73,40 @@ export const runPlacement = async (req, res) => {
 
 // Shared placement processor for both semesters
 async function processPlacement(students, departmentMap, departmentData, scoreStage, placedStage) {
+  console.log(`\n[INFO] Starting placement for stage: ${scoreStage}`);
+  console.log(`[INFO] Total students to check: ${students.length}`);
+
   const studentsWithScores = students
     .map(student => {
       const validation = validatePreferences(student, scoreStage);
-      if (!validation.valid) return null;
+      if (!validation.valid) {
+        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - ${validation.reason}`);
+        return null;
+      }
+
+      // Map department preferences
       const validPreferences = student.preferences
         .map(pref => departmentMap[pref.toLowerCase()] || null)
         .filter(Boolean);
+
+      if (validPreferences.length === 0) {
+        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - No valid preferences found in DB`);
+        return null;
+      }
+
+      // Check required fields for score calculation
+      if (student.entranceScore == null || student.entranceMax == null) {
+        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - Missing entrance exam data`);
+        return null;
+      }
+
+      // Calculate total score
+      const scoreDetails = calculateTotalScore(student, scoreStage);
+      console.log(`[INFO] Eligible: ${student.studentId} (${student.fullName}) - Total Score: ${scoreDetails.totalScore}`);
+
       return {
         ...student.toObject(),
-        ...calculateTotalScore(student, scoreStage),
+        ...scoreDetails,
         preferences: validPreferences,
         placed: false,
         assignedDepartment: null
@@ -91,30 +115,51 @@ async function processPlacement(students, departmentMap, departmentData, scoreSt
     .filter(Boolean)
     .sort((a, b) => b.totalScore - a.totalScore);
 
+  // Department capacity setup
   const departmentPlacements = {};
   Object.values(departmentMap).forEach(name => {
     const dept = departmentData[name];
-    departmentPlacements[name] = { capacity: dept ? dept.capacity : 50, students: [], maleCount: 0, femaleCount: 0 };
+    departmentPlacements[name] = {
+      capacity: dept ? dept.capacity : 50,
+      students: [],
+      maleCount: 0,
+      femaleCount: 0
+    };
   });
 
+  // Placement loop
   for (const student of studentsWithScores) {
     if (student.placed) continue;
+
+    let placedHere = false;
     for (let i = 0; i < student.preferences.length; i++) {
       const deptName = student.preferences[i];
       const deptPlacement = departmentPlacements[deptName];
-      if (!deptPlacement) continue;
+      if (!deptPlacement) {
+        console.log(`[WARN] Department "${deptName}" not found for student ${student.studentId}`);
+        continue;
+      }
       if (deptPlacement.students.length < deptPlacement.capacity) {
         deptPlacement.students.push(student);
         student.gender === 'Male' ? deptPlacement.maleCount++ : deptPlacement.femaleCount++;
         student.placed = true;
         student.assignedDepartment = deptName;
         student.placementStage = placedStage;
+        placedHere = true;
+        console.log(`[PLACE] Student ${student.studentId} (${student.fullName}) -> ${deptName}`);
         break;
       }
     }
+
+    if (!placedHere) {
+      console.log(`[UNPLACED] Student ${student.studentId} (${student.fullName}) - All preferred departments full`);
+    }
   }
 
+  // Apply female quota enforcement
   applyFemaleQuota(departmentPlacements, studentsWithScores);
+
+  // Save to DB
   await savePlacementResults(studentsWithScores);
 
   return {
@@ -126,10 +171,14 @@ async function processPlacement(students, departmentMap, departmentData, scoreSt
       filled: data.students.length,
       males: data.maleCount,
       females: data.femaleCount,
-      femalePercentage: data.students.length > 0 ? Math.round((data.femaleCount / data.students.length) * 100) : 0
+      femalePercentage:
+        data.students.length > 0
+          ? Math.round((data.femaleCount / data.students.length) * 100)
+          : 0
     }))
   };
 }
+
 
 // Apply female quota enforcement (20% rule)
 function applyFemaleQuota(departmentPlacements, studentsWithScores) {
