@@ -1,19 +1,10 @@
 import Student from '../models/student.js';
 import Department from '../models/Department.js';
-import {
-  computeBonus,
-  computeTotal,
-  canPlaceSemester1,
-  canPlaceSemester2,
-  validatePreferences,
-  CONFIG
-} from '../services/placementService.js';
+import { computeBonus, computeTotal, canPlaceSemester1, canPlaceSemester2, validatePreferences, CONFIG } from '../services/placementService.js';
 
-// Compute total score details for a given placement stage
+// Calculate total score details
 const calculateTotalScore = (student, placementStage) => {
-  const gpaToUse = placementStage === 'after-sem1' ? student.gpa
-                   : placementStage === 'after-sem2' ? student.cgpa
-                   : student.gpa;
+  const gpaToUse = placementStage === 'after-sem1' ? student.gpa : student.cgpa;
   const bonus = computeBonus({
     gender: student.gender,
     disability: student.disability,
@@ -34,201 +25,143 @@ const calculateTotalScore = (student, placementStage) => {
   };
 };
 
-// Main placement algorithm
+// Run placement for Sem1 and Sem2
 export const runPlacement = async (req, res) => {
   try {
     const students = await Student.find();
     const departments = await Department.find();
-    if (students.length === 0) return res.status(400).json({ message: 'No students found' });
-    if (departments.length === 0) return res.status(400).json({ message: 'No departments found' });
-
-    // case-insensitive name -> canonical name
-    const departmentMap = Object.fromEntries(departments.map(d => [d.name.toLowerCase(), d.name]));
-    // canonical name -> Department doc
-    const departmentData = Object.fromEntries(departments.map(d => [d.name, d]));
+    if (!students.length) return res.status(400).json({ message: 'No students found' });
+    if (!departments.length) return res.status(400).json({ message: 'No departments found' });
 
     const semester1Students = students.filter(s => canPlaceSemester1(s) && s.placementStage === 'admitted');
     const semester2Students = students.filter(s => canPlaceSemester2(s) && s.placementStage === 'after-sem1');
 
-    const semester1Results = await processPlacement(semester1Students, departmentMap, departmentData, 'after-sem1', 'after-sem1');
-    const semester2Results = await processPlacement(semester2Students, departmentMap, departmentData, 'after-sem2', 'placed');
-
-    const totalPlaced = semester1Results.placed + semester2Results.placed;
-    const totalUnplaced = semester1Results.unplaced + semester2Results.unplaced;
+    const semester1Results = await processPlacement(semester1Students, departments, 'after-sem1');
+    const semester2Results = await processPlacement(semester2Students, departments, 'after-sem2');
 
     res.status(200).json({
-      message: 'Placement algorithm completed successfully',
-      summary: {
-        totalStudents: students.length,
-        placedStudents: totalPlaced,
-        unplacedStudents: totalUnplaced,
-        semester1Results,
-        semester2Results
-      }
+      message: 'Placement algorithm completed',
+      summary: { semester1Results, semester2Results }
     });
   } catch (error) {
     res.status(500).json({ message: 'Placement algorithm failed', error: error.message });
   }
 };
 
-// Shared placement processor for both semesters
-async function processPlacement(students, departmentMap, departmentData, scoreStage, placedStage) {
-  console.log(`\n[INFO] Starting placement for stage: ${scoreStage}`);
-  console.log(`[INFO] Total students to check: ${students.length}`);
-
+// Process placement
+async function processPlacement(students, departments, placementStage) {
   const studentsWithScores = students
     .map(student => {
-      const validation = validatePreferences(student, scoreStage);
-      if (!validation.valid) {
-        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - ${validation.reason}`);
-        return null;
-      }
+      const validation = validatePreferences(student, placementStage);
+      if (!validation.valid) return { ...student.toObject(), placed: false, reason: validation.reason };
 
-      // Map department preferences
-      const validPreferences = student.preferences
-        .map(pref => departmentMap[pref.toLowerCase()] || null)
-        .filter(Boolean);
-
-      if (validPreferences.length === 0) {
-        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - No valid preferences found in DB`);
-        return null;
-      }
-
-      // Check required fields for score calculation
-      if (student.entranceScore == null || student.entranceMax == null) {
-        console.log(`[SKIP] Student ${student.studentId} (${student.fullName}) skipped - Missing entrance exam data`);
-        return null;
-      }
-
-      // Calculate total score
-      const scoreDetails = calculateTotalScore(student, scoreStage);
-      console.log(`[INFO] Eligible: ${student.studentId} (${student.fullName}) - Total Score: ${scoreDetails.totalScore}`);
-
-      return {
-        ...student.toObject(),
-        ...scoreDetails,
-        preferences: validPreferences,
-        placed: false,
-        assignedDepartment: null
-      };
+      const scoreDetails = calculateTotalScore(student, placementStage);
+      return { ...student.toObject(), ...scoreDetails, placed: false, assignedDepartment: null, assignedSubStream: null };
     })
-    .filter(Boolean)
-    .sort((a, b) => b.totalScore - a.totalScore);
+    .sort((a, b) => (b.totalScore || 0) - (a.totalScore || 0));
 
-  // Department capacity setup
-  const departmentPlacements = {};
-  Object.values(departmentMap).forEach(name => {
-    const dept = departmentData[name];
-    departmentPlacements[name] = {
-      capacity: dept ? dept.capacity : 50,
-      students: [],
-      maleCount: 0,
-      femaleCount: 0
-    };
+  // Setup buckets for streams, substreams, final departments
+  const buckets = {};
+
+  // Streams
+  Object.entries(CONFIG.streams).forEach(([name, config]) => {
+    buckets[name] = { capacity: config.capacity, students: [], maleCount: 0, femaleCount: 0 };
+    if (config.nextStep === 'sub') {
+      Object.entries(config.sub).forEach(([subName, subConfig]) => {
+        buckets[subName] = { capacity: subConfig.capacity, students: [], maleCount: 0, femaleCount: 0 };
+      });
+    }
+  });
+
+  // Final departments
+  departments.forEach(d => {
+    buckets[d.name] = { capacity: d.capacity, students: [], maleCount: 0, femaleCount: 0 };
   });
 
   // Placement loop
   for (const student of studentsWithScores) {
     if (student.placed) continue;
+    let placed = false;
 
-    let placedHere = false;
-    for (let i = 0; i < student.preferences.length; i++) {
-      const deptName = student.preferences[i];
-      const deptPlacement = departmentPlacements[deptName];
-      if (!deptPlacement) {
-        console.log(`[WARN] Department "${deptName}" not found for student ${student.studentId}`);
-        continue;
-      }
-      if (deptPlacement.students.length < deptPlacement.capacity) {
-        deptPlacement.students.push(student);
-        student.gender === 'Male' ? deptPlacement.maleCount++ : deptPlacement.femaleCount++;
-        student.placed = true;
-        student.assignedDepartment = deptName;
-        student.placementStage = placedStage;
-        placedHere = true;
-        console.log(`[PLACE] Student ${student.studentId} (${student.fullName}) -> ${deptName}`);
-        break;
-      }
+    for (const pref of student.preferences) {
+      const bucket = buckets[pref];
+      if (!bucket || bucket.students.length >= bucket.capacity) continue;
+
+      // Assign student
+      bucket.students.push(student);
+      student.gender === 'Male' ? bucket.maleCount++ : bucket.femaleCount++;
+      student.placed = true;
+
+      // Track substream if applicable
+      if (CONFIG.streams[pref]?.nextStep === 'sub') student.assignedSubStream = pref;
+
+      // Assign department (final department or temporary substream)
+      student.assignedDepartment = placementStage === 'after-sem2' && student.assignedSubStream
+        ? student.assignedSubStream
+        : pref;
+
+      placed = true;
+      break;
     }
 
-    if (!placedHere) {
-      console.log(`[UNPLACED] Student ${student.studentId} (${student.fullName}) - All preferred departments full`);
-    }
+    if (!placed && !student.reason) student.reason = 'All preferred streams/departments full';
   }
 
-  // Apply female quota enforcement
-  applyFemaleQuota(departmentPlacements, studentsWithScores);
+  // Apply female quota per bucket
+  applyFemaleQuota(buckets, studentsWithScores);
 
-  // Save to DB
-  await savePlacementResults(studentsWithScores);
-
-  return {
-    placed: studentsWithScores.filter(s => s.placed).length,
-    unplaced: studentsWithScores.filter(s => !s.placed).length,
-    departments: Object.entries(departmentPlacements).map(([name, data]) => ({
-      name,
-      capacity: data.capacity,
-      filled: data.students.length,
-      males: data.maleCount,
-      females: data.femaleCount,
-      femalePercentage:
-        data.students.length > 0
-          ? Math.round((data.femaleCount / data.students.length) * 100)
-          : 0
-    }))
-  };
-}
-
-
-// Apply female quota enforcement (20% rule)
-function applyFemaleQuota(departmentPlacements, studentsWithScores) {
-  for (const [deptName, deptPlacement] of Object.entries(departmentPlacements)) {
-    const totalPlaced = deptPlacement.students.length;
-    if (totalPlaced === 0) continue;
-    const targetFemales = Math.ceil(totalPlaced * 0.20);
-    if (deptPlacement.femaleCount >= targetFemales) continue;
-
-    const neededFemales = targetFemales - deptPlacement.femaleCount;
-    const availableFemales = studentsWithScores
-      .filter(s => !s.placed && s.gender === 'Female' && s.preferences.includes(deptName))
-      .sort((a, b) => b.totalScore - a.totalScore);
-    const malesInDept = deptPlacement.students
-      .filter(s => s.gender === 'Male')
-      .sort((a, b) => a.totalScore - b.totalScore);
-
-    const replacementsNeeded = Math.min(neededFemales, availableFemales.length, malesInDept.length);
-    for (let i = 0; i < replacementsNeeded; i++) {
-      const femaleToAdd = availableFemales[i];
-      const maleToRemove = malesInDept[i];
-      const maleIndex = deptPlacement.students.findIndex(s => s.studentId === maleToRemove.studentId);
-      deptPlacement.students.splice(maleIndex, 1);
-      deptPlacement.maleCount--;
-      const originalMale = studentsWithScores.find(s => s.studentId === maleToRemove.studentId);
-      originalMale.placed = false;
-      originalMale.assignedDepartment = null;
-      deptPlacement.students.push(femaleToAdd);
-      deptPlacement.femaleCount++;
-      femaleToAdd.placed = true;
-      femaleToAdd.assignedDepartment = deptName;
-    }
-  }
-}
-
-// Save placement results to database
-async function savePlacementResults(studentsWithScores) {
+  // Save placement results to DB
   await Promise.all(
-    studentsWithScores.map(student =>
+    studentsWithScores.map(s =>
       Student.findOneAndUpdate(
-        { studentId: student.studentId },
+        { studentId: s.studentId },
         {
-          totalScore: student.totalScore,
-          assignedDepartment: student.assignedDepartment,
-          placementStage: student.placementStage
+          totalScore: s.totalScore,
+          assignedDepartment: s.assignedDepartment,
+          assignedSubStream: s.assignedSubStream,
+          placementStage: placementStage === 'after-sem1' ? 'after-sem1' : 'placed'
         },
         { new: true }
       )
     )
   );
+
+  return {
+    placed: studentsWithScores.filter(s => s.placed).length,
+    unplaced: studentsWithScores.filter(s => !s.placed).length,
+    unplacedDetails: studentsWithScores.filter(s => !s.placed).map(s => ({ studentId: s.studentId, fullName: s.fullName, reason: s.reason }))
+  };
+}
+
+// Apply female quota
+function applyFemaleQuota(buckets, studentsWithScores) {
+  Object.entries(buckets).forEach(([bucketName, bucket]) => {
+    const targetFemales = Math.ceil(bucket.students.length * 0.2);
+    if (bucket.femaleCount >= targetFemales) return;
+
+    const neededFemales = targetFemales - bucket.femaleCount;
+    const availableFemales = studentsWithScores
+      .filter(s => !s.placed && s.gender === 'Female' && s.preferences.includes(bucketName))
+      .sort((a, b) => b.totalScore - a.totalScore);
+    const malesInBucket = bucket.students.filter(s => s.gender === 'Male').sort((a, b) => a.totalScore - b.totalScore);
+
+    const replacements = Math.min(neededFemales, availableFemales.length, malesInBucket.length);
+    for (let i = 0; i < replacements; i++) {
+      const female = availableFemales[i];
+      const male = malesInBucket[i];
+      const maleIndex = bucket.students.findIndex(s => s.studentId === male.studentId);
+      bucket.students.splice(maleIndex, 1);
+      bucket.maleCount--;
+      const originalMale = studentsWithScores.find(s => s.studentId === male.studentId);
+      originalMale.placed = false;
+      originalMale.assignedDepartment = null;
+
+      bucket.students.push(female);
+      bucket.femaleCount++;
+      female.placed = true;
+      female.assignedDepartment = bucketName;
+    }
+  });
 }
 
 // Get placement results
@@ -236,9 +169,11 @@ export const getPlacementResults = async (req, res) => {
   try {
     const students = await Student.find({ assignedDepartment: { $ne: null } }).sort({ totalScore: -1 });
     const departments = await Department.find();
+
     const departmentResults = Object.fromEntries(
       departments.map(d => [d.name, { capacity: d.capacity, students: [] }])
     );
+
     students.forEach(s => {
       const bucket = departmentResults[s.assignedDepartment];
       if (!bucket) return;
@@ -249,8 +184,6 @@ export const getPlacementResults = async (req, res) => {
         region: s.region,
         totalScore: s.totalScore,
         gpa: s.gpa,
-        semester1GPA: s.semester1GPA,
-        semester2GPA: s.semester2GPA,
         cgpa: s.cgpa,
         entranceScore: s.entranceScore,
         disability: s.disability,
@@ -258,6 +191,7 @@ export const getPlacementResults = async (req, res) => {
         placementStage: s.placementStage
       });
     });
+
     res.status(200).json({ totalPlaced: students.length, departments: departmentResults });
   } catch (error) {
     res.status(500).json({ message: 'Error fetching placement results', error: error.message });
@@ -270,7 +204,7 @@ export const clearPlacements = async (req, res) => {
     await Student.updateMany(
       {},
       {
-        $unset: { assignedDepartment: 1, totalScore: 1 },
+        $unset: { assignedDepartment: 1, assignedSubStream: 1, totalScore: 1 },
         $set: { placementStage: 'admitted' }
       }
     );

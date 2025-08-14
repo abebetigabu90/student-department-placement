@@ -47,7 +47,9 @@ const studentSchema = new mongoose.Schema({
     enum: ['admitted','after-sem1','after-sem2','placed'],
     default: 'admitted'
   },
-  assignedDepartment: { type: String },                   // final assigned department name
+  assignedStream: { type: String, default: null },
+  assignedSubStream: { type: String, default: null },
+  assignedDepartment: { type: String, default: null },                   // final assigned department name
   totalScore:        { type: Number }
 });
 
