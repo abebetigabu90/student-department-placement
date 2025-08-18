@@ -38,10 +38,13 @@ connectDB();
 //     }
 //     return total
 // }
+
+//the ff code is used to assign a department for natural science and first semister student only
+const placementForFirstSemNatural = async()=>{
 const naturalFirstSem = await Student.find({stream:'natural',gpa:{$exists:true},cgpa:{$exists:false},Department:null},)
 //the ff code is used to assign a department for natural science and first semister student only
 if(naturalFirstSem.length>0){
-    //console.log(naturalFirstSem)
+    console.log('filtering students which has no score and calculating their total score and update their total score value')
     const studentsWithoutTotScore = naturalFirstSem.filter((stu)=>{return stu.totalScore == 0})  // filter only students who has no total score
     if (studentsWithoutTotScore.length>0){    // used to calculate total score and assign only for only who don't have total score
         for( const stu of studentsWithoutTotScore){
@@ -56,29 +59,40 @@ if(naturalFirstSem.length>0){
 }
     }
 //the ff code is used if the there are one or more students who has total score and to sort and assign department for each student
-const studentsWithScore = await naturalFirstSem.filter((stu)=>{return stu.totalScore>0})
-if(studentsWithScore.length==0){
-   console.log("there is no student who has Total score value assigned!") 
+const studentsWithScoreAndPref = naturalFirstSem.filter((stu)=>{return stu.totalScore>0 && stu.preferences.length>0})
+if(studentsWithScoreAndPref.length==0){
+   console.log("student with total score and preference not found!") 
 }
-
 else{
-    const sortedStudents = studentsWithScore.sort((a,b)=>{return b.totalScore - a.totalScore})
-    // console.log(sortedStudents)
+    console.log("sorting each student with score in descending order and assigning department")
+    const sortedStudents = studentsWithScoreAndPref.sort((a,b)=>{return b.totalScore - a.totalScore})
+    const departments = await Department.find()
     for (const stu of sortedStudents){
-        if(stu.preferences.length==0){
-            console.log(`${stu.fullName} has not choosen any department!`)
-            continue
-        }
-        else{
-            console.log("preferences is available")
+        for (const pref of stu.preferences){
+            const dept = departments.find((d)=>{return d.deptID.toLowerCase() == pref.toLowerCase()})
+            if(!dept || dept.capacity == 0){
+                continue
+            }
+            else if(dept && dept.capacity>0 ){
+                await Student.updateOne({studentId:stu.studentId},{$set:{Department:dept.deptID}})
+                await Department.updateOne({deptID:dept.deptID},{$inc:{capacity:-1},$push:{assignedStudents:stu.studentId}})
+                dept.capacity--
+                break
+            }
             
-    }
+        }
  }
 }
 }
-
-
-
+}
+//placementForFirstSemNatural()
+// const studentswithDepartment = await Student.find({Department:{$ne:null}})
+// console.log(studentswithDepartment)
+const clearPlacement=async()=>{await Student.updateMany({},{$set:{preferences:[],Department:null,totalScore:0}},)}  
+clearPlacement()
+// const studentswithDepartment = await Student.find({Department:{$ne:null}})
+const students = await Student.find()
+console.log(students)
 //next step is assign by checking his preference is from the 6 natural student alternatives  and assign only once one department  for each student by checking department capacity iteratively for each prefence
             //then check female quota of each department iteratively 
             //unsign the last male student from the department and assign for top female among not assigned yet but prefers it untill 20% of female reached or no female need it or for all departments
