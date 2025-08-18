@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "temp":"node src/controllers/customizedPlacement.js",
+    "temp2":"node src/controllers/CRUDstudent.js",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

@@ -9,6 +9,7 @@ const studentSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  stream:{type:String,required:true},
   gender: {
     type: String,
     enum: ['Male', 'Female'],
@@ -24,33 +25,31 @@ const studentSchema = new mongoose.Schema({
   },
   gpa: {
     type: Number,
-    required: true,
   },
   disability: {
     type: String,
     default: 'None',
   },
-  disabilityVerified: {
-    type: Boolean,
-    default: false,
-  },
-  preferences: [{
-    type: String,  // Store department names in priority order (index 0 = Priority 1, index 1 = Priority 2, etc.)
-  }],
-  entranceMax:       { type: Number, default: 700},//{ type: Number, required: true },    // 600 or 700
-  semester1GPA:      { type: Number },                    // set after Sem 1
-  semester2GPA:      { type: Number },                    // set after Sem 2
-  cgpa:              { type: Number },                    // provided by university system
-
-  placementStage: {
-    type: String,
-    enum: ['admitted','after-sem1','after-sem2','placed'],
-    default: 'admitted'
-  },
-  assignedStream: { type: String, default: null },
-  assignedSubStream: { type: String, default: null },
-  assignedDepartment: { type: String, default: null },                   // final assigned department name
-  totalScore:        { type: Number }
+  preferences: [{type: String,}],
+  cgpa:{ type: Number },                    // provided by university system
+  Department: { type: String, default: null },            
+  totalScore:        { type: Number,default:0 }
 });
 
 export default mongoose.model('Student', studentSchema);
+
+
+ // disabilityVerified: {
+  //   type: Boolean,
+  //   default: false,
+  // },
+ // placementStage: {
+  //   type: String,
+  //   enum: ['admitted','after-sem1','after-sem2','placed'],
+  //   default: 'admitted'
+  // },
+  // semester1GPA:      { type: Number },                    // set after Sem 1
+  // semester2GPA:      { type: Number }, 
+  //   assignedStream: { type: String, default: null },
+  // assignedSubStream: { type: String, default: null },
+   // entranceMax:       { type: Number, default: 700},//{ type: Number, required: true },    // 600 or 700
