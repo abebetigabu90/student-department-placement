@@ -112,8 +112,8 @@ connectDB();
 //     ]
 // )
 
-// 
-const departments = await Department.find()
-console.log(departments)
-// const students =await Student.find()
+
+// const departments = await Department.find()
+// console.log(departments)
+//const students =await Student.find()
 // console.log(students)

@@ -77,43 +77,48 @@ else{
     for (const stu of sortedStudents){
         for (const pref of stu.preferences){
             const dept = departments.find((d)=>{return d.name.toLowerCase() == pref.toLowerCase()})
-            if(!dept || dept.capacity == 0){
-                if(!dept){console.log(chalk.red(`${pref}, not found on the department documents `))}
-                else{console.log(chalk.red(`${pref},capacity is full`))}
-              continue
+            if (!dept) {
+            console.log(chalk.red.bold(`Invalid department preference: ${pref}`));
+            continue;
             }
-            else if(dept && dept.capacity>0 && validFirstSemNatDepartments.includes(dept.name.toLowerCase()) ){
+
+             if(validFirstSemNatDepartments.includes(dept.name.toLowerCase()) ){
                 console.log(chalk.green(`processing...to place ${stu.fullName} on ${dept.name}`))
-                await Student.updateOne({studentId:stu.studentId},{$set:{Department:deptMap.get(dept.name.toLowerCase())}})
-                dept.capacity--
-                const res = await Department.updateOne({ deptID: dept.deptId },{ $push: { assignedStudents: stu.studentId } })
-                if (res.modifiedCount === 0) {console.log('Department update failed:', dept.name)}
+                const res = await Department.updateOne({ deptID: dept.deptID,$expr:{$lt:["$totalAssignedStudents","$capacity"]}},{ $inc:{totalAssignedStudents:1},$push: { assignedStudents: stu.studentId } })
+                if (res.modifiedCount === 0) {
+                    console.log(`${stu.fullName} can not be placed in ${dept.name},capacity full or not found! `)
+                    continue
+                }
+                 await Student.updateOne({studentId:stu.studentId},{$set:{Department:dept.deptID}})
                 console.log(chalk.blue(`${stu.fullName}, is successfully placed on ${dept.name}`))
                 break
             }
-            else{
-                console.log(chalk.red.bold(`Invalid department preference: ${pref}`))
-            continue
-            }
-            
+            else {console.log(chalk.yellow(`${dept.name} is not valid for first semester placement`));} 
         }
  }
 }
 }
 }
 
+//i use the ff async function for sequential execution to prevent concurrency
+async function runPlacement(){
+    await placementForFirstSemNatural()
+    // const departments = await Department.find()
+    // console.log(departments)
+    // const students = await Student.find()
+    // console.log(students)
 
-
-//placementForFirstSemNatural()
+}
+//runPlacement()
 const clearPlacement=async()=>{
     await Student.updateMany({},{$set:{Department:null}})
-    await Department.updateMany({},{$set:{assignedStudents:[]}})
+    await Department.updateMany({},{$set:{assignedStudents:[],totalAssignedStudents:0}})
 }  
- //clearPlacement()
+//clearPlacement()
 const departments = await Department.find()
 console.log(departments)
 const students = await Student.find()
-console.log(students)
+console.log(students) 
 
 
 
