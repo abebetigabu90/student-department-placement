@@ -9,7 +9,7 @@ connectDB();
 
 //  await Student.deleteMany({})
 //  const deletedstudents = await Student.find()
-//  console.log(deletedstudents)
+// console.log(deletedstudents)
 
 //  const student = await Student.insertMany(
 //     [
@@ -21,7 +21,7 @@ connectDB();
 //         region:'Amhara',
 //         entranceScore:100,
 //         gpa:3,
-//         preferences:['cs','IT','other']
+//         preferences:['medicine','pharmacy',]
 //      },
 //      {
 //         studentId:'dtu2',
@@ -31,7 +31,7 @@ connectDB();
 //         region:'Amhara',
 //         entranceScore:100,
 //         gpa:2,
-//         preferences:['cs','IT','other']
+//         preferences:['medicine','pharmacy',]
 //     },
 //      {
 //         studentId:'dtu3',
@@ -41,7 +41,7 @@ connectDB();
 //         region:'Amhara',
 //         entranceScore:200,
 //         gpa:4,
-//         preferences:['cs','IT','other']
+//         preferences:['medicine','pharmacy',]
 //     },
 //      {
 //         studentId:'dtu4',
@@ -51,7 +51,7 @@ connectDB();
 //         region:'Amhara',
 //         entranceScore:250,
 //         gpa:4,
-//         preferences:['computer Science','IT','medicine']
+//         preferences:['medicine','pharmacy',]
 //     }
 //     ]
 // )
@@ -63,30 +63,57 @@ connectDB();
 // console.log(students)
 // const updatedPreference = await Student.updateMany(
 //     {},
-//     {$set:{preferences:['cs','IT','other']}}
+//     {$set:{preferences:['Medicine','Computer Science','Other Natural']}}
 // )
 
 
-// // const deleteDepartment = await Department.deleteMany({})
+// const deleteDepartment = await Department.deleteMany({})
+// const departments = await Department.find()
+// console.log(departments)
+
 // await Department.insertMany(
 //     [
-//     //     {   
-//     //     deptID:'cs',
-//     //     name:'computer science',
-//     //     capacity:2
-//     // },
-//       {   
-//         deptID:'IT',
-//         name:'information technology',
+//         {   
+//         deptID:'cs',
+//         name:'computer science',
+//         stream:'natural',
 //         capacity:2
 //     },
 //       {   
-//         deptID:'other',
-//         name:'other natural science',
+//         deptID:'IT',
+//         name:'information technology',
+//         stream:'natural',
+//         capacity:2
+//     },
+//       {   
+//         deptID:'otherNatural',
+//         name:'other natural',
+//          stream:'natural',
+//         capacity:2
+//     },
+//       {   
+//         deptID:'medicine',
+//         name:'medicine',
+//         stream:'natural',
+//         capacity:2
+//     },
+//         {   
+//         deptID:'pharmacy',
+//         name:'pharmacy',
+//          stream:'natural',
+//         capacity:2
+//     },
+//     {   
+//         deptID:'engineering',
+//         name:'engineering',
+//          stream:'natural',
 //         capacity:2
 //     },
 //     ]
 // )
 
+// 
+const departments = await Department.find()
+console.log(departments)
 // const students =await Student.find()
 // console.log(students)
