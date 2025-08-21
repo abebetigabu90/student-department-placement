@@ -40,10 +40,13 @@ import chalk from 'chalk'
 // }
 
 //the ff code is used to assign a department for natural science and first semister student only
-const placementForFirstSemNatural = async()=>{
+const GenplacementForFirstSemNatural = async()=>{
 const naturalFirstSem = await Student.find({stream:'natural',gpa:{$exists:true},cgpa:{$exists:false},$or: [ { Department: null }, { Department: { $exists: false } } ]},)
 //the ff code is used to assign a department for natural science and first semister student only
-if(naturalFirstSem.length>0){
+if (naturalFirstSem.length == 0){
+    console.log(chalk.blue.bold('all first semister and natural science students are placed!'))
+}
+else if(naturalFirstSem.length>0){    // else if  with condition is for readability you can make it simply else without condition
     const studentsWithoutTotScore = naturalFirstSem.filter((stu)=>{return stu.totalScore == 0})  // filter only students who has no total score
     if (studentsWithoutTotScore.length>0){   
         console.log(chalk.green.bold('calculating total score for students who donot have!')) // used to calculate total score and assign only for only who don't have total score
@@ -70,10 +73,10 @@ if(studentsWithScoreAndPref.length==0){
 else{
     console.log(chalk.green.bold("sorting each student with score in descending order and assigning department"))
     const sortedStudents = studentsWithScoreAndPref.sort((a,b)=>{return b.totalScore - a.totalScore})
-    const departments = await Department.find()
-    const deptMap = new Map(departments.map((d)=>{return [d.name.toLowerCase(),d.deptID]}))
-    const validFirstSemNatDepartments = ['computer science','medicine','pharmacy','other natural','IT','engineering']
-
+   // const departments = await Department.find()
+    //const deptMap = new Map(departments.map((d)=>{return [d.name.toLowerCase(),d.deptID]}))
+    const departments = await Department.find({name:{$in:[/^computer science$/i,/^medicine$/i,/^pharmacy$/i,/^other natural$/i,/^IT$/i,/^engineering$/i]}})
+    //const validFirstSemNatDepartments = ['computer science','medicine','pharmacy','other natural','IT','engineering']
     for (const stu of sortedStudents){
         for (const pref of stu.preferences){
             const dept = departments.find((d)=>{return d.name.toLowerCase() == pref.toLowerCase()})
@@ -82,7 +85,8 @@ else{
             continue;
             }
 
-             if(validFirstSemNatDepartments.includes(dept.name.toLowerCase()) ){
+             //if(validFirstSemNatDepartments.includes(dept.name.toLowerCase()) )
+              else  {
                 console.log(chalk.green(`processing...to place ${stu.fullName} on ${dept.name}`))
                 const res = await Department.updateOne({ deptID: dept.deptID,$expr:{$lt:["$totalAssignedStudents","$capacity"]}},{ $inc:{totalAssignedStudents:1},$push: { assignedStudents: stu.studentId } })
                 if (res.modifiedCount === 0) {
@@ -93,67 +97,79 @@ else{
                 console.log(chalk.blue(`${stu.fullName}, is successfully placed on ${dept.name}`))
                 break
             }
-            else {console.log(chalk.yellow(`${dept.name} is not valid for first semester placement`));} 
+            //else {console.log(chalk.yellow(`${dept.name} is not valid for first semester placement`));} 
         }
  }
 }
 }
 }
-const femaleQuota_Adjustment = async()=>{
-const departments = await Department.find()
+const femaleQuota_AdjustmentForNaturalSem1 = async()=>{
+    // since female quota adjustment should be done in different levels at this level the female quota adjustment is on the listed departments to manage easily and to fix the error easily if it occur .
+const departments = await Department.find({name:{$in:[/^computer science$/i,/^medicine$/i,/^pharmacy$/i,/^other natural$/i,/^IT$/i,/^engineering$/i]}})
 for(const dept of departments){
     const females = await Student.find({gender:'Female',Department:dept.deptID})
     const males = await Student.find({gender:'Male',Department:dept.deptID})
     const totalStudentsOfdept = females.length + males.length
     const ratioOfdept = females.length/totalStudentsOfdept
-    if(ratioOfdept>=0.2){continue}
+    if(ratioOfdept>=0.2){
+        console.log(chalk.blue.bold('there is no need of female quota adjustment already adjusted!'))
+         continue
+    }
     else{
         const FemalesWhoWantDept = await Student.find({gender:'Female',$or:[{Department:null},{Department:{$ne:dept.deptID}}],"preferences.0":dept.name})  // females who want dept to be placed
-        const maxWantedFemales = 0.2*totalStudentsOfdept
+        const maxWantedFemales = Math.ceil(0.2*totalStudentsOfdept)
         if(FemalesWhoWantDept.length<=maxWantedFemales){
             const sortedMales = males.sort((a,b)=>{return a.totalScore - b.totalScore})
             for(let i=0;i < FemalesWhoWantDept.length;i++){
-                await Department.updateOne({deptID:dept.deptID},{$pull:{assignedStudents:sortedMales[i].studentId}})
+                //the ff two lines of codes displace the least score males to make the department free to place males 
+                await Department.updateOne({deptID:dept.deptID},{$pull:{assignedStudents:sortedMales[i].studentId},$inc:{totalAssignedStudents:-1}})
                 await Student.updateOne({studentId:sortedMales[i].studentId},{$set:{Department:null}})
-                await Department.updateOne({deptID:dept.deptID},{$push:{assignedStudents:FemalesWhoWantDept[i].studentId}})
+                //since before assign females on the freed departments they should be displaced from their current department so the ff two lines of code do this
+                await Department.updateOne({deptID:FemalesWhoWantDept[i].Department},{$pull:{assignedStudents:FemalesWhoWantDept[i].studentId},$inc:{totalAssignedStudents:-1}})
+                //the ff two lines of code are used to assign females on the freed departments
+                await Department.updateOne({deptID:dept.deptID},{$push:{assignedStudents:FemalesWhoWantDept[i].studentId},$inc:{totalAssignedStudents:1}})
                 await Student.updateOne({studentId:FemalesWhoWantDept[i].studentId},{$set:{Department:dept.deptID}})
             }
         }
         //the ff else code is if females count who want dept is greater than the maximum needed females to fill the quota
         else{
             const sortedMales = males.sort((a,b)=>{return a.totalScore - b.totalScore})
+            const sortedFemalesWhoWantDept = FemalesWhoWantDept.sort((a,b)=>{return b.totalScore - a.totalScore}) 
             for(let i=0;i < maxWantedFemales;i++){
-                await Department.updateOne({deptID:dept.deptID},{$pull:{assignedStudents:sortedMales[i].studentId}})
+                //the ff two lines of codes displace the least score males to make the department free to place males 
+                await Department.updateOne({deptID:dept.deptID},{$pull:{assignedStudents:sortedMales[i].studentId},$inc:{totalAssignedStudents:-1}})
                 await Student.updateOne({studentId:sortedMales[i].studentId},{$set:{Department:null}})
-                await Department.updateOne({deptID:dept.deptID},{$push:{assignedStudents:FemalesWhoWantDept[i].studentId}})
-                await Student.updateOne({studentId:FemalesWhoWantDept[i].studentId},{$set:{Department:dept.deptID}})
+                //since before assign females on the freed departments they should be displaced from their current department so the ff two lines of code do this
+                if (sortedFemalesWhoWantDept[i].Department !== null && sortedFemalesWhoWantDept[i].Department !== undefined){
+                    await Department.updateOne({deptID:sortedFemalesWhoWantDept[i].Department},{$pull:{assignedStudents:sortedFemalesWhoWantDept[i].studentId},$inc:{totalAssignedStudents:-1}})
+                }
+                //the ff two lines of code are used to assign females on the freed departments
+                await Department.updateOne({deptID:dept.deptID},{$push:{assignedStudents:sortedFemalesWhoWantDept[i].studentId},$inc: {totalAssignedStudents:1}})
+                await Student.updateOne({studentId:sortedFemalesWhoWantDept[i].studentId},{$set:{Department:dept.deptID}})
             }
         }
     }
 }
-// the ff code is to place all the unplaced males on the available departments i think it is better to reuse the first general placement again   
-placementForFirstSemNatural()
+
 }
 
 //i use the ff async function for sequential execution to prevent concurrency
-async function runPlacement(){
-    await placementForFirstSemNatural()
-    // const departments = await Department.find()
-    // console.log(departments)
-    // const students = await Student.find()
-    // console.log(students)
-
+async function runPlacementforNaturalSem1(){
+    await GenplacementForFirstSemNatural()
+    await femaleQuota_AdjustmentForNaturalSem1()
+    await GenplacementForFirstSemNatural() //to reassign males in first semister natural departments who are displaced for female quota adjustment
+    const departments = await Department.find()
+    console.log(departments)
+    const students = await Student.find()
+    console.log(students) 
 }
-//runPlacement()
+
+runPlacementforNaturalSem1()
 const clearPlacement=async()=>{
     await Student.updateMany({},{$set:{Department:null}})
     await Department.updateMany({},{$set:{assignedStudents:[],totalAssignedStudents:0}})
 }  
 //clearPlacement()
-const departments = await Department.find()
-console.log(departments)
-const students = await Student.find()
-console.log(students) 
 
 
 

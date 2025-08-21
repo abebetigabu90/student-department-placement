@@ -113,7 +113,17 @@ connectDB();
 // )
 
 
+// const unplaceAllStudents = await Student.updateMany(
+//     {},
+//     {$set:{Department:null}}
+// )
+// const unplaceAllStudentsfromDepts = await Department.updateMany(
+//     {},
+//     {$set:{assignedStudents:[],totalAssignedStudents:0}}
+// )
+//  const students = await Student.find()
+// console.log(students)
 // const departments = await Department.find()
 // console.log(departments)
-//const students =await Student.find()
+// const students =await Student.find()
 // console.log(students)
