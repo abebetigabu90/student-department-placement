@@ -36,7 +36,7 @@ const studentSchema = new mongoose.Schema({
   totalScore:        { type: Number,default:0 }
 });
 
-export default mongoose.model('Student', studentSchema);
+export default mongoose.model('Student', studentSchema,'Student');
 
 
  // disabilityVerified: {

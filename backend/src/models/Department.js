@@ -8,4 +8,4 @@ const departmentSchema = new mongoose.Schema({
   totalAssignedStudents:{type:Number,default:0}
 });
 
-export default mongoose.model('Department', departmentSchema);
+export default mongoose.model('Department', departmentSchema,'Department');
