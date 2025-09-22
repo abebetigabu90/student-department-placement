@@ -19,9 +19,9 @@ connectDB();
 //         stream:'natural',
 //         gender:'Female',
 //         region:'Amhara',
-//         entranceScore:100,
-//         gpa:3,
-//         preferences:['medicine','pharmacy',]
+//         entranceScore:630,
+//         gpa:4,
+//         preferences:['medicine','pharmacy','other natural']
 //      },
 //      {
 //         studentId:'dtu2',
@@ -29,30 +29,50 @@ connectDB();
 //         stream:'natural',
 //         gender:'Female',
 //         region:'Amhara',
-//         entranceScore:100,
-//         gpa:2,
-//         preferences:['medicine','pharmacy',]
+//         entranceScore:500,
+//         gpa:3,
+//         preferences:['medicine','pharmacy','other natural']
 //     },
-//      {
+//       {
 //         studentId:'dtu3',
-//         fullName:'maru',
+//         fullName:'aster3',
 //         stream:'natural',
-//         gender:'Male',
+//         gender:'Female',
 //         region:'Amhara',
-//         entranceScore:200,
-//         gpa:4,
-//         preferences:['medicine','pharmacy',]
+//         entranceScore:500,
+//         gpa:2,
+//         preferences:['medicine','pharmacy','other natural']
 //     },
 //      {
 //         studentId:'dtu4',
+//         fullName:'maru1',
+//         stream:'natural',
+//         gender:'Male',
+//         region:'Amhara',
+//         entranceScore:690,
+//         gpa:4,
+//         preferences:['medicine','pharmacy','other natural']
+//     },
+//      {
+//         studentId:'dtu5',
 //         fullName:'maru2',
 //         stream:'natural',
 //         gender:'Male',
 //         region:'Amhara',
-//         entranceScore:250,
+//         entranceScore:650,
 //         gpa:4,
-//         preferences:['medicine','pharmacy',]
-//     }
+//         preferences:['medicine','pharmacy','other natural']
+//     },
+//       {
+//         studentId:'dtu6',
+//         fullName:'maru3',
+//         stream:'natural',
+//         gender:'Female',
+//         region:'Amhara',
+//         entranceScore:600,
+//         gpa:3,
+//         preferences:['medicine','pharmacy','other natural']
+//     },
 //     ]
 // )
 // const insertedStudents = await Student.find()
@@ -64,6 +84,10 @@ connectDB();
 // const updatedPreference = await Student.updateMany(
 //     {},
 //     {$set:{preferences:['Medicine','Computer Science','Other Natural']}}
+// )
+// const updatedPreference = await Student.updateOne(
+//     {studentId:'dtu5'},
+//     {$set:{entranceScore:685,totalScore:0,Department:null}}
 // )
 
 
