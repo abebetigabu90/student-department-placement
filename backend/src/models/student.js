@@ -1,42 +1,94 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+
 const studentSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  middleName: {
+    type: String,
+    trim: true
+  },
+  lastName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   studentId: {
     type: String,
     required: true,
     unique: true,
+    trim: true
   },
-  fullName: {
+  password: {
+    type: String,
+    required: true
+  },
+  stream: {
     type: String,
     required: true,
+    enum: ['Natural Science', 'Social Science']
   },
-  stream:{type:String,required:true},
   gender: {
     type: String,
-    enum: ['Male', 'Female'],
     required: true,
+    enum: ['Male', 'Female']
   },
   region: {
     type: String,
     required: true,
+    enum: [
+      'Addis Ababa',
+      'Afar',
+      'Amhara',
+      'Benishangul-Gumuz',
+      'Dire Dawa',
+      'Gambela',
+      'Harari',
+      'Oromia',
+      'Sidama',
+      'Somali',
+      'Southern Nations, Nationalities, and Peoples\' Region (SNNPR)',
+      'Tigray'
+    ]
+  },
+  isPlaced: {
+    type: Boolean,
+    default: false
   },
   entranceScore: {
     type: Number,
-    required: true,
   },
   gpa: {
     type: Number,
+    default: 0
   },
   disability: {
     type: String,
     default: 'None',
   },
-  preferences: [{type: String,}],
-  cgpa:{ type: Number },                    // provided by university system
-  Department: { type: String, default: null },            
-  totalScore:        { type: Number,default:0 }
+  preferences: { 
+    type: [String], 
+    default: [] 
+  },
+  cgpa: { 
+    type: Number, 
+    default: 0 
+  },
+  Department: { 
+    type: String, 
+    default: null 
+  },
+  totalScore: { 
+    type: Number, 
+    default: 0 
+  },
+}, {
+  timestamps: true
 });
-
-export default mongoose.model('Student', studentSchema,'Student');
+export default mongoose.model('Student', studentSchema, 'Student');
 
 
  // disabilityVerified: {
