@@ -6,7 +6,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './src/config/db.js';
-
 dotenv.config();
 
 const app = express();
@@ -16,6 +15,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/students', studentsRouter);
 app.use('/api/placement', placementRouter);
+
+
 app.get('/', (req, res) => {
   res.send('API is running...');
 });
@@ -34,3 +35,4 @@ const startServer = async () => {
 };
 
 startServer();
+
