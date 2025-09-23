@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const adminSchema = new mongoose.Schema({
+  name:{type:String},
   email: {
     type: String,
     required: true,
@@ -9,7 +10,7 @@ const adminSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true
-  }
+  },
 });
 
 const Admin = mongoose.model('Admin', adminSchema);

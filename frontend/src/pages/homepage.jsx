@@ -25,12 +25,6 @@ export default function Homepage() {
           >
             Login
           </Link>
-          <Link
-            to="/signup"
-            className="w-full py-2 px-4 rounded-xl border border-blue-600 text-blue-600 font-medium hover:bg-blue-50 transition"
-          >
-            Signup
-          </Link>
         </div>
       </div>
 
