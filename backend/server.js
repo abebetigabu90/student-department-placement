@@ -16,11 +16,13 @@ app.use('/api/student', studentsRouter);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/placement', placementRouter);
 
-
-//api for student login
-app.post('/api/student/login', async (req, res) => {
-  
-});
+app.post('/logout',async(req,res)=>{
+  try{res.json({message:'loged out successfully!'})}
+  catch(e){
+    console.error(e)
+    return res.status(500).json({error:'internal server error'})
+  }
+})
 
 const PORT = process.env.PORT || 5000;
 

@@ -15,6 +15,9 @@ import Signup from './pages/Signup'
 import CreateStudent from './components/createStudents'
 import StudentDashboard from './pages/studentDashboard'
 import AdminDashboard from './pages/adminDashboard'
+import PrivateRoute from './components/privateRoute'
+import Unauthorized from './pages/unauthorized'
+import Logout from './pages/logout'
 function App() {
   return (
 
@@ -24,37 +27,32 @@ function App() {
         <Routes>
       {/* public routes */}
       <Route path="/login" element={<Login/>}/>
-      {/* <Route path="/logout" element={<Logout/>}/> */}
-      <Route path="/student/dashboard" element={<StudentDashboard/>}/>
-      <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
-      <Route path="/create-students" element={<CreateStudent/>}/>
+      <Route path="/logout" element={<Logout/>}/>
       <Route path="/" element={<HomePage />} />
-      {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}
+      <Route path="/unauthorized" element={<Unauthorized />} />
       
       {/* Student Protected Routes */}
-      {/* <Route element={<PrivateRoute allowedRoles={["student"]} />}> */}
-          {/* <Route element={<StudentLayout />}>
+      <Route element={<PrivateRoute allowedRoles={["student"]} />}>
+          {/* <Route element={<StudentLayout />}> */}
               <Route path="/student/dashboard" element={<StudentDashboard/>}/>
-              <Route path="/student/submit" element={<SubmitComplaintPage />} />
-              <Route path="/student/complaints" element={<Complaints />} />
-              <Route path="/student/profile" element={<StudentProfilePage />} />
-          </Route> */}
-      {/* </Route> */}
+          {/* </Route> */}
+      </Route>
       
       {/* Admin Protected Routes */}
-      {/* <Route element={<PrivateRoute allowedRoles={["admin"]} />}> */}
-          {/* <Route element={<AdminLayout />}> */}
-   
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/students" element={<Students />} />
-                <Route path="/students/add" element={<AddStudent />} />
-                <Route path="/departments" element={<Departments />} />
-                <Route path="/upload" element={<Upload />} />
-                <Route path="/placement" element={<Placement />} />
-                <Route path="/results" element={<Results />} /> 
+      <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
+          {/* <Route element={<Layout />}> */}
+                <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
+                <Route path="/admin/create-students" element={<CreateStudent/>}/>
+                {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
+                {/* <Route path="/students" element={<Students />} /> */}
+                {/* <Route path="/students/add" element={<AddStudent />} /> */}
+                {/* <Route path="/departments" element={<Departments />} /> */}
+                {/* <Route path="/upload" element={<Upload />} /> */}
+                {/* <Route path="/placement" element={<Placement />} /> */}
+                {/* <Route path="/results" element={<Results />} />  */}
                 {/* AdminReportsPage */}
           {/* </Route> */}
-      {/* </Route> */}
+      </Route>
     </Routes>
     </Router>
 
