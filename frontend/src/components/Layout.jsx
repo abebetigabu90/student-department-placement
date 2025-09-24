@@ -23,7 +23,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: Home },
     { name: 'Students', href: '/students', icon: Users },
-    { name: 'Add Student', href: '/students/add', icon: UserPlus },
+    { name: 'Add Student', href: '/admin/create-students', icon: UserPlus },
     { name: 'Upload CSV', href: '/upload', icon: Upload },
     { name: 'Departments', href: '/departments', icon: Building2 },
     { name: 'Run Placement', href: '/placement', icon: Play },

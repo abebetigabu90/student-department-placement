@@ -91,7 +91,7 @@ export default function AdminDashboard() {
           </Link>
 
           {/* Create Student */}
-          <Link to="/admin/students/create">
+          <Link to="/admin/create-students">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-green-500">
               <div className="flex items-center">
                 <div className="p-3 bg-green-100 rounded-lg">
