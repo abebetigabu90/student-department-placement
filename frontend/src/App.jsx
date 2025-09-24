@@ -13,6 +13,7 @@ import Results from './pages/Results';
 import HomePage from './pages/homepage'
 import Signup from './pages/Signup'
 import CreateStudent from './components/createStudents'
+import StudentDashboard from './pages/studentDashboard'
 function App() {
   return (
 
@@ -23,6 +24,7 @@ function App() {
       {/* public routes */}
       <Route path="/login" element={<Login/>}/>
       {/* <Route path="/logout" element={<Logout/>}/> */}
+      <Route path="/student/dashboard" element={<StudentDashboard/>}/>
       <Route path="/create-students" element={<CreateStudent/>}/>
       <Route path="/" element={<HomePage />} />
       {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}

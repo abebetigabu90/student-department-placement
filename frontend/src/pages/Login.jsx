@@ -149,21 +149,22 @@ export default function LoginPage() {
 
     try {
       const apiUrl =
-        userType === "student" ? "/api/student/login" : "/api/admin/login";
+        userType === "student" ? "http://localhost:5000/api/student/login" : "http://localhost:5000/api/admin/login";
 
       const requestData =
         userType === "student"
           ? { studentId: formData.username, password: formData.password }
           : { email: formData.username, password: formData.password };
 
-      const response = await axios.post(apiUrl, requestData, {
-        withCredentials: true,
-      });
+      const response = await axios.post(apiUrl, requestData);
 
       if (response.data.success) {
         localStorage.setItem("token", response.data.token);
-        localStorage.setItem("userType", userType);
-        navigate(`/${userType}/dashboard`);
+        localStorage.setItem("userType", response.data.userType);
+        const userData = response.data.userType === 'student' ? response.data.student : response.data.admin;
+        localStorage.setItem("userData", JSON.stringify(userData));
+         alert('Login successful');
+         navigate(`/${response.data.userType}/dashboard`);
       } else {
         setMessage(response.data.message);
       }
