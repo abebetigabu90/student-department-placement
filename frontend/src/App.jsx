@@ -14,6 +14,7 @@ import HomePage from './pages/homepage'
 import Signup from './pages/Signup'
 import CreateStudent from './components/createStudents'
 import StudentDashboard from './pages/studentDashboard'
+import AdminDashboard from './pages/adminDashboard'
 function App() {
   return (
 
@@ -25,6 +26,7 @@ function App() {
       <Route path="/login" element={<Login/>}/>
       {/* <Route path="/logout" element={<Logout/>}/> */}
       <Route path="/student/dashboard" element={<StudentDashboard/>}/>
+      <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
       <Route path="/create-students" element={<CreateStudent/>}/>
       <Route path="/" element={<HomePage />} />
       {/* <Route path="/unauthorized" element={<Unauthorized />} /> */}
