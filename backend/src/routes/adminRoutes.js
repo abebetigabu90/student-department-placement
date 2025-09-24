@@ -1,13 +1,44 @@
 import express from 'express';
-import { loginAdmin } from '../controllers/adminController.js';
+// import { loginAdmin } from '../controllers/adminController.js';
 import adminAuth from '../middleware/adminAuth.js';
 import { uploadStudentCSV } from '../controllers/studentController.js';
 import upload from '../middleware/uploadMiddleware.js';
 import Student from '../models/student.js'
+import Admin from '../models/Admin.js';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 // ✅ Admin login route
-router.post('/login', loginAdmin);
+router.post('/login',async(req,res)=>{
+    try {
+    const { email, password } = req.body;
+
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({ success: false, message: "Admin not found" });
+    }
+
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: "Invalid password" });
+    }
+
+    const token = jwt.sign(
+      { id: admin._id, type: "admin" },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRESIN }
+    );
+
+    const { password: _, ...adminData } = admin.toObject();
+    res.json({ success: true, token, userType: 'admin', admin: adminData });
+    console.log('Admin logged in successfully');
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 
 
 router.post('/create-student', async (req, res) => {
