@@ -60,6 +60,7 @@ const studentSchema = new mongoose.Schema({
   },
   entranceScore: {
     type: Number,
+    default:0
   },
   gpa: {
     type: Number,
