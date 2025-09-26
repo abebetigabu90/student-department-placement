@@ -129,7 +129,7 @@ app.post("/api/student/preferences/:id", async (req, res) => {
 
 
 
-// Simple ranking - just show first preference students
+// show first preference students with descending order
 app.get("/api/ranking/:departmentName", async (req, res) => {
   try {
     const { departmentName } = req.params;
@@ -168,14 +168,13 @@ app.get("/api/ranking/:departmentName", async (req, res) => {
       studentMap[student._id.toString()] = student;
     });
 
-    // Create ranking data
-    const rankingData = firstPreferenceStudents.map((pref, index) => {
+    // Create ranking data with student information
+    let rankingData = firstPreferenceStudents.map((pref) => {
       const student = studentMap[pref.student.toString()];
       if (!student) return null;
 
       return {
-        rank: index + 1,
-        studentId: student.studentId, // Your custom student ID
+        studentId: student.studentId,
         studentName: student.name,
         gpa: student.gpa,
         entranceScore: student.entranceScore,
@@ -184,12 +183,26 @@ app.get("/api/ranking/:departmentName", async (req, res) => {
       };
     }).filter(Boolean);
 
+    // Sort by totalScore descending (highest score first)
+  rankingData.sort((a, b) => {
+  if (b.totalScore !== a.totalScore) {
+    return b.totalScore - a.totalScore;
+  }
+  // If total scores are equal, sort by GPA
+  return b.gpa - a.gpa;
+  });
+
+    // Assign ranks based on the sorted order
+    rankingData.forEach((student, index) => {
+      student.rank = index + 1;
+    });
+
     res.json({
       department: departmentName,
       capacity: department.capacity,
       totalApplicants: rankingData.length,
       ranking: rankingData,
-      note: "Showing all students who selected this department as first preference"
+      note: "Students sorted by total score (highest to lowest)"
     });
 
   } catch (err) {
