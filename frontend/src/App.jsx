@@ -18,6 +18,8 @@ import AdminDashboard from './pages/adminDashboard'
 import PrivateRoute from './components/privateRoute'
 import Unauthorized from './pages/unauthorized'
 import Logout from './pages/logout'
+import DepartmentPreferencePage from './pages/departmentPreferences'
+import RankingPage from './pages/viewRanking'
 function App() {
   return (
 
@@ -35,6 +37,8 @@ function App() {
       <Route element={<PrivateRoute allowedRoles={["student"]} />}>
           {/* <Route element={<StudentLayout />}> */}
               <Route path="/student/dashboard" element={<StudentDashboard/>}/>
+              <Route path="/student/departmentPreferences" element={<DepartmentPreferencePage/>}/>
+              <Route path="/ranking/:departmentName" element={<RankingPage />} />
           {/* </Route> */}
       </Route>
       
