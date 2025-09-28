@@ -5,6 +5,8 @@ import { uploadStudentCSV } from '../controllers/studentController.js';
 import upload from '../middleware/uploadMiddleware.js';
 import Student from '../models/student.js'
 import Admin from '../models/Admin.js';
+import Preference from '../models/preferences.js'
+import Department from '../models/Department.js'
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
@@ -127,6 +129,17 @@ router.post('/create-student', async (req, res) => {
   }
 });
 
+// GET: fetch all students
+router.get('/viewStudents',async(req,res)=>{
+try {
+    const students = await Student.find().sort({ createdAt: -1 });
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+})
+
+
 
 // ✅ Protected test route
 router.get('/protected', adminAuth, (req, res) => {
@@ -140,5 +153,6 @@ router.post(
   upload.single('file'), // This handles the file upload
   uploadStudentCSV       // This processes and saves the data
 );
+
 
 export default router;

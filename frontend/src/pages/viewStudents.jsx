@@ -16,7 +16,7 @@ const ViewStudents = () => {
 
   const fetchStudents = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/viewStudents');
+      const response = await axios.get('http://localhost:5000/api/admin/viewStudents');
       setStudents(response.data);
       setLoading(false);
     } catch (error) {

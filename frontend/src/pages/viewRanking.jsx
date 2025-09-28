@@ -13,7 +13,7 @@ const RankingPage = () => {
     async function fetchRanking() {
       try {
         const response = await axios.get(
-          `http://localhost:5000/api/ranking/${encodeURIComponent(departmentName)}`
+          `http://localhost:5000/api/student/ranking/${encodeURIComponent(departmentName)}`
         );
         setRankingData(response.data);
       } catch (err) {
