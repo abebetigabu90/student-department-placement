@@ -20,6 +20,7 @@ import Unauthorized from './pages/unauthorized'
 import Logout from './pages/logout'
 import DepartmentPreferencePage from './pages/departmentPreferences'
 import RankingPage from './pages/viewRanking'
+import ViewStudents from './pages/viewStudents'
 function App() {
   return (
 
@@ -47,6 +48,7 @@ function App() {
           {/* <Route element={<Layout />}> */}
                 <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
                 <Route path="/admin/create-students" element={<CreateStudent/>}/>
+                <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
                 {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
                 {/* <Route path="/students" element={<Students />} /> */}
                 {/* <Route path="/students/add" element={<AddStudent />} /> */}
