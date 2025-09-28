@@ -213,6 +213,153 @@ app.get("/api/ranking/:departmentName", async (req, res) => {
 
 
 
+// GET: fetch all students
+app.get("/api/viewStudents", async (req, res) => {
+    try {
+    const students = await Student.find().sort({ createdAt: -1 });
+    res.json(students);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
+
+// Add grades to student
+app.post('/api/students/:id/grades', async (req, res) => {
+  try {
+    const { gpaOrcgpa, entranceScore } = req.body;
+    
+    // Validate input
+    if (!gpaOrcgpa || !entranceScore) {
+      return res.status(400).json({ 
+        message: 'GPA/CGPA and entrance score are required' 
+      });
+    }
+
+    if (gpaOrcgpa < 0 || gpaOrcgpa > 4.0) {
+      return res.status(400).json({ 
+        message: 'GPA/CGPA must be between 0.0 and 4.0' 
+      });
+    }
+
+    if (entranceScore < 0 || entranceScore > 600) {
+      return res.status(400).json({ 
+        message: 'Entrance score must be between 0 and 600' 
+      });
+    }
+
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+        // Helper function to calculate total score
+    function calculateTotalScore(gpaOrcgpa, entranceScore) {
+      // Convert GPA/CGPA to percentage (assuming 4.0 scale)
+      const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+      
+      // Normalize entrance score to percentage (out of 600)
+      const entrancePercentage = (entranceScore / 600) * 100;
+      
+      // Calculate weighted total (adjust weights as needed)
+      // Example: 50% from GPA/CGPA and 50% from entrance exam
+      const totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+      
+      return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
+    }
+    // Calculate total score (you can adjust the formula as needed)
+    const totalScore = calculateTotalScore(gpaOrcgpa, entranceScore);
+
+    // Update student with grades
+    student.gpa = gpaOrcgpa;
+    student.entranceScore = entranceScore;
+    student.totalScore = totalScore;
+    const updatedStudent = await student.save();
+    
+    res.json({
+      message: 'Grades added successfully',
+      student: updatedStudent
+    });
+  } catch (error) {
+    console.error('Error adding grades:', error);
+    res.status(400).json({ 
+      message: 'Failed to add grades',
+      error: error.message 
+    });
+  }
+});
+
+
+
+// Update student grades
+app.put('/api/students/:id/updateGrades', async (req, res) => {
+  try {
+    const { gpaOrcgpa, entranceScore } = req.body;
+    
+    // Validate input
+    if (!gpaOrcgpa || !entranceScore) {
+      return res.status(400).json({ 
+        message: 'GPA/CGPA and entrance score are required' 
+      });
+    }
+
+    if (gpaOrcgpa < 0 || gpaOrcgpa > 4.0) {
+      return res.status(400).json({ 
+        message: 'GPA/CGPA must be between 0.0 and 4.0' 
+      });
+    }
+
+    if (entranceScore < 0 || entranceScore > 600) {
+      return res.status(400).json({ 
+        message: 'Entrance score must be between 0 and 700' 
+      });
+    }
+
+    const student = await Student.findById(req.params.id);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // Calculate total score
+    const totalScore = calculateTotalScore(gpaOrcgpa, entranceScore);
+
+    // Update student grades
+    student.gpa = gpaOrcgpa;
+    student.entranceScore = entranceScore;
+    student.totalScore = totalScore;
+    const updatedStudent = await student.save();
+    
+    res.json({
+      message: 'Grades updated successfully',
+      student: updatedStudent
+    });
+  } catch (error) {
+    console.error('Error updating grades:', error);
+    res.status(400).json({ 
+      message: 'Failed to update grades',
+      error: error.message 
+    });
+  }
+});
+
+// Helper function to calculate total score
+function calculateTotalScore(gpaOrcgpa, entranceScore) {
+  // Convert GPA/CGPA to percentage (assuming 4.0 scale)
+  const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+  
+  // Normalize entrance score to percentage (out of 700)
+  const entrancePercentage = (entranceScore / 600) * 100;
+  
+  // Calculate weighted total (adjust weights as needed)
+  // Example: 50% from GPA/CGPA and 50% from entrance exam
+  const totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+  
+  return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
+}
+
+
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
