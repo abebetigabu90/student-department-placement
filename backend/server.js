@@ -100,8 +100,24 @@ app.post('/api/students/:id/grades', async (req, res) => {
       
       // Calculate weighted total (adjust weights as needed)
       // Example: 50% from GPA/CGPA and 50% from entrance exam
-      const totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
-      
+      let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+      if(student.gender==='Female'){
+        totalScore +=5
+      }
+      const emergingRegions = [
+        "Afar",
+        "Benishangul-Gumuz",
+        "Gambela",
+        "Somali"
+      ];
+
+      // check if student's region is exactly one of them
+      if (emergingRegions.includes(student.region)) {
+        totalScore += 5;
+      }
+      if(student.disability!=='none'){
+       totalScore +=10 
+      }
       return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
     }
     // Calculate total score (you can adjust the formula as needed)

@@ -53,7 +53,8 @@ router.post('/create-student', async (req, res) => {
       password,
       stream,
       gender,
-      region
+      region,
+      disability
     } = req.body;
 
     // Simple validation
@@ -82,7 +83,8 @@ router.post('/create-student', async (req, res) => {
       password: password,
       stream,
       gender,
-      region
+      region,
+      disability
     });
 
     // ✅ MISSING CODE: Save the student to database
@@ -99,7 +101,8 @@ router.post('/create-student', async (req, res) => {
         studentId: newStudent.studentId,
         stream: newStudent.stream,
         gender: newStudent.gender,
-        region: newStudent.region
+        region: newStudent.region,
+        disability:newStudent.disability
       }
     });
 
