@@ -30,7 +30,8 @@ export default function CreateStudent() {
     password: "",
     stream: "",
     gender: "",
-    region: ""
+    region: "",
+    disability: "none",
   });
 
   const [message, setMessage] = useState("");
@@ -60,7 +61,8 @@ export default function CreateStudent() {
         password: "",
         stream: "",
         gender: "",
-        region: ""
+        region: "",
+        disability: "none",
       });
     } catch (err) {
       setMessage(
@@ -233,6 +235,29 @@ export default function CreateStudent() {
             </select>
           </div>
 
+          {/* Disability */}
+          <div>
+            <label
+              htmlFor="disability"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Disability
+            </label>
+            <select
+              id="disability"
+              name="disability"
+              value={formData.disability || "none"}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-lg"
+              required
+            >
+              <option value="none">None</option>
+              <option value="hearing">Hearing</option>
+              <option value="visual">Visual</option>
+              <option value="physical">Physical</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
           <button
             type="submit"
             disabled={loading}

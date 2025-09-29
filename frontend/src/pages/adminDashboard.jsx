@@ -190,7 +190,7 @@ export default function AdminDashboard() {
           </Link>
 
           {/* View All Students */}
-          <Link to="/admin/students/list">
+          <Link to="/admin/viewStudents">
             <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow cursor-pointer border-l-4 border-teal-500">
               <div className="flex items-center">
                 <div className="p-3 bg-teal-100 rounded-lg">
