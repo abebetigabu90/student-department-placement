@@ -54,22 +54,23 @@ const studentSchema = new mongoose.Schema({
       'Tigray'
     ]
   },
-  disability: {
+disability: {
   type: String,
-  enum: ['none', 'hearing', 'visual', 'physical', 'other'],
+  enum: ['none', 'None', 'hearing', 'visual', 'physical', 'other'],
   default: 'none',
 },
+
   isPlaced: {
     type: Boolean,
     default: false
   },
   entranceScore: {
     type: Number,
-    default:0
+    default:null
   },
   gpa: {
     type: Number,
-    default: 0
+    default: null
   },
   preferences: { 
     type: [String], 
@@ -77,7 +78,7 @@ const studentSchema = new mongoose.Schema({
   },
   cgpa: { 
     type: Number, 
-    default: 0 
+    default: null
   },
   Department: { 
     type: String, 
@@ -85,7 +86,7 @@ const studentSchema = new mongoose.Schema({
   },
   totalScore: { 
     type: Number, 
-    default: 0 
+    default: null
   },
 }, {
   timestamps: true

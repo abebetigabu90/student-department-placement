@@ -4,7 +4,7 @@ const departmentSchema = new mongoose.Schema({
   name:     { type: String, unique: true ,required:true},
   capacity: { type: Number, required: true },
   stream:{type:String,enum:['natural','social'],required:true},
-  assignedStudents:[{type:String}],
+  // assignedStudents:[{type:String}],
   totalAssignedStudents:{type:Number,default:0}
 });
 
