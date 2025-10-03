@@ -59,7 +59,7 @@ app.get('/api/departments', async (req, res) => {
 //api for submit departments and show first preference students with descending order
 app.use('/api/student',studentRoutes)
 
-app.use('/api/admin',adminRoutes)
+// app.use('/api/admin',adminRoutes)
 
 // Add grades to student
 app.post('/api/students/:id/grades', async (req, res) => {
@@ -172,6 +172,35 @@ app.put('/api/students/:id/updateGrades', async (req, res) => {
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
+        function calculateTotalScore(gpaOrcgpa, entranceScore) {
+      // Convert GPA/CGPA to percentage (assuming 4.0 scale)
+      const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+      
+      // Normalize entrance score to percentage (out of 600)
+      const entrancePercentage = (entranceScore / 600) * 100;
+      
+      // Calculate weighted total (adjust weights as needed)
+      // Example: 50% from GPA/CGPA and 50% from entrance exam
+      let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+      if(student.gender==='Female'){
+        totalScore +=5
+      }
+      const emergingRegions = [
+        "Afar",
+        "Benishangul-Gumuz",
+        "Gambela",
+        "Somali"
+      ];
+
+      // check if student's region is exactly one of them
+      if (emergingRegions.includes(student.region)) {
+        totalScore += 5;
+      }
+      if(student.disability!=='none'){
+       totalScore +=10 
+      }
+      return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
+    }
 
     // Calculate total score
     const totalScore = calculateTotalScore(gpaOrcgpa, entranceScore);
@@ -194,21 +223,6 @@ app.put('/api/students/:id/updateGrades', async (req, res) => {
     });
   }
 });
-
-// Helper function to calculate total score
-function calculateTotalScore(gpaOrcgpa, entranceScore) {
-  // Convert GPA/CGPA to percentage (assuming 4.0 scale)
-  const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
-  
-  // Normalize entrance score to percentage (out of 700)
-  const entrancePercentage = (entranceScore / 600) * 100;
-  
-  // Calculate weighted total (adjust weights as needed)
-  // Example: 50% from GPA/CGPA and 50% from entrance exam
-  const totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
-  
-  return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
-}
 
 
 
