@@ -245,131 +245,106 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
     }
 };
 
-// const femaleQuota_AdjustmentForNaturalSem1 = async()=>{
-//     // since female quota adjustment should be done in different levels at this level the female quota adjustment is on the listed departments to manage easily and to fix the error easily if it occur .
-// const departments = await Department.find({name:{$in:[/^computer science$/i,/^medicine$/i,/^pharmacy$/i,/^other natural$/i,/^IT$/i,/^engineering$/i]}})
-// for(const dept of departments){
-//     const females = await Student.find({gender:'Female',Department:dept.deptID})
-//     const males = await Student.find({gender:'Male',Department:dept.deptID})
-//     const totalStudentsOfdept = females.length + males.length
-//     const ratioOfdept = females.length/totalStudentsOfdept
-//     if(ratioOfdept>=0.2){
-//         console.log(chalk.blue.bold(`there is no need of female quota adjustment for department ${dept.name}. already adjusted!`))
-//          continue
-//     }
-//     else{
-//         if(dept.totalAssignedStudents == 0){
-//             console.log(chalk.white(`there is no any student assigned on department ${dept.name}`))
-//             continue
-//         }
-//         console.log(chalk.magenta.bold(`processing...female quota adjustment for department ${dept.name} `))
-//         // the ff codes finds female students whose first preference of dept is priority 1
-//         const femaleStudents = await Student.find({ gender: 'Female',Department:null });
-//         const femaleStudentIds = femaleStudents.map(student => student._id);
-//         const FemalesWhoWantDept = await Preference.find({
-//         department: dept._id,
-//         priority: 1,
-//         student: { $in: femaleStudentIds }
-//         });
-//         // const FemalesWhoWantDept = await Student.find({gender:'Female',$or:[{Department:null},{Department:{$ne:dept.deptID}}],"preferences.0":dept.name})  // females who want dept to be placed
-//         const maxWantedFemales = Math.ceil(0.2*totalStudentsOfdept)
-//         if(FemalesWhoWantDept.length == 0){
-//             console.log(chalk.green.bold(`there is no any female whose first preference ${dept.name}.`))
-//         }
-//         else if(FemalesWhoWantDept.length<=maxWantedFemales){
-//             const sortedMales = males.sort((a,b)=>{return a.totalScore - b.totalScore})
-//             for(let i=0;i < FemalesWhoWantDept.length;i++){
-//                 //the ff two lines of codes displace the least score males to make the department free to place males 
+
+
+// Placement for Natural Science students who didn't get their first choice
+export const placementForUnplacedFirstSemNatural = async () => {
+    try {
+        console.log("Starting placement for unplaced Natural Science students...");
+        
+        // Find students who need placement
+        const unplacedStudents = await Student.find({
+            stream: 'Natural Science',
+            Department: null, // Not placed in any department yet
+            totalScore: { $exists: true }
+        });
+
+        if (unplacedStudents.length === 0) {
+            console.log('No students need placement.');
+            return { message: 'No students to place' };
+        }
+
+        console.log(`Found ${unplacedStudents.length} students to place`);
+        
+        // Sort students by score (highest first)
+        const sortedStudents = unplacedStudents.sort((a, b) => b.totalScore - a.totalScore);
+
+        let placedCount = 0;
+
+        // Process each student one by one
+        for (const student of sortedStudents) {
+            console.log(`\nProcessing student: ${student.firstName} ${student.lastName}`);
+            
+            // Get student's preferences
+            const preferences = await Preference.find({ 
+                student: student._id 
+            }).sort({ priority: 1 }); // Sort by priority (1st, 2nd, 3rd...)
+
+            if (preferences.length === 0) {
+                console.log(`❌ No preferences found for ${student.firstName}`);
+                continue;
+            }
+
+            let studentPlaced = false;
+
+            // Try each preference in order
+            for (const preference of preferences) {
+                const department = await Department.findById(preference.department);
                 
+                if (!department) {
+                    console.log(`Department not found for preference`);
+                    continue;
+                }
 
-//                 const session = await mongoose.startSession();
-//                 session.startTransaction();
+                // Check if department has space
+                if (department.totalAssignedStudents < department.capacity) {
+                    // Place the student
+                    await Student.findByIdAndUpdate(student._id, {
+                        Department: department._id
+                    });
 
-//                 try {
-//                 await Department.updateOne(
-//                     {deptID: dept.deptID}, 
-//                     {$inc: {totalAssignedStudents: -1}},
-//                     {session}
-//                 );
-                
-//                 await Placement.deleteOne(
-//                     {student: sortedMales[i]},
-//                     {session}
-//                 );
-//                  //the ff codes used to assign freed departments for females
-//                 await Student.updateOne({studentId:FemalesWhoWantDept[i].studentId},{$set:{Department:dept.deptID}},{session})
-//                 await Department.updateOne(
-//                     {deptID: dept.deptID}, 
-//                     {$inc: {totalAssignedStudents: 1}},
-//                     {session}
-//                 );
-//                 console.log(chalk.green.bold(`female quota balancing on department ${dept.name} completely done.`))
-//                 await session.commitTransaction();
-//                 } catch (error) {
-//                 await session.abortTransaction();
-//                 throw error;
-//                 } finally {
-//                 session.endSession();
-//                 }
-//             }
-//         }
-//         //the ff else code is if females count who want dept is greater than the maximum needed females to fill the quota
-//         else{
-//             const sortedMales = males.sort((a,b)=>{return a.totalScore - b.totalScore})
-//             const sortedFemalesWhoWantDept = FemalesWhoWantDept.sort((a,b)=>{return b.totalScore - a.totalScore}) 
-//             for(let i=0;i < maxWantedFemales;i++){
-//                 const session = await mongoose.startSession();
-//                 session.startTransaction();
+                    await Department.findByIdAndUpdate(department._id, {
+                        $inc: { totalAssignedStudents: 1 }
+                    });
 
-//                 try {
-//                 await Department.updateOne(
-//                     {deptID: dept.deptID}, 
-//                     {$inc: {totalAssignedStudents: -1}},
-//                     {session}
-//                 );
-                
-//                 await Placement.deleteOne(
-//                     {student: sortedMales[i]},
-//                     {session}
-//                 );
-//                  //the ff codes used to assign freed departments for females
-//                 await Student.updateOne({studentId:sortedFemalesWhoWantDept[i].studentId},{$set:{Department:dept.deptID}},{session})
-//                 await Department.updateOne(
-//                     {deptID: dept.deptID}, 
-//                     {$inc: {totalAssignedStudents: 1}},
-//                     {session}
-//                 );
-//                 console.log(chalk.green.bold(`female quota balancing on department ${dept.name} completely done.`))
-//                 await session.commitTransaction();
-//                 } catch (error) {
-//                 await session.abortTransaction();
-//                 throw error;
-//                 } finally {
-//                 session.endSession();
-//                 }
+                    // Create placement record
+                    const placement = new Placement({
+                        student: student._id,
+                        department: department._id,
+                        priority: preference.priority
+                    });
+                    await placement.save();
 
-//             }
-//         }
-//     }
-// }
+                    console.log(`✅ Placed ${student.firstName} in ${department.name} (Choice #${preference.priority})`);
+                    placedCount++;
+                    studentPlaced = true;
+                    break; // Stop looking for other preferences
+                } else {
+                    console.log(`❌ ${department.name} is full`);
+                }
+            }
 
-// }
+            if (!studentPlaced) {
+                console.log(`❌ Could not place ${student.firstName} - all preferred departments are full`);
+            }
+        }
 
-//  runPlacementforNaturalSem1()
-// const clearPlacement=async()=>{
-//     await Student.updateMany({},{$set:{Department:null}})
-//     await Department.updateMany({},{$set:{assignedStudents:[],totalAssignedStudents:0}})
-// }  
-//clearPlacement()
+        console.log(`\n🎉 Placement completed!`);
+        console.log(`Total students placed: ${placedCount}`);
+        console.log(`Total students not placed: ${unplacedStudents.length - placedCount}`);
 
+        return {
+            success: true,
+            placed: placedCount,
+            total: unplacedStudents.length,
+            message: `Placed ${placedCount} out of ${unplacedStudents.length} students`
+        };
 
-
-//next step is assign by checking his preference is from the 6 natural student alternatives  and assign only once one department  for each student by checking department capacity iteratively for each prefence
-            //then check female quota of each department iteratively 
-            //unsign the last male student from the department and assign for top female among not assigned yet but prefers it untill 20% of female reached or no female need it or for all departments
-            //re assign male students who are replaced by female on the department of other their choose which is still not filled
-
-
-
-
-
+    } catch (error) {
+        console.error('Error during placement:', error);
+        return {
+            success: false,
+            error: error.message
+        };
+    }
+};
