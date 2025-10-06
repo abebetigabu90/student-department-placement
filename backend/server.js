@@ -228,21 +228,74 @@ app.put('/api/students/:id/updateGrades', async (req, res) => {
 
 
 // routes/preferences.js
-Router.get('/api/admin/view/preferences', async (req, res) => {
+app.get('/api/admin/view/stuPreferences', async (req, res) => {
   try {
-    const preferences = await Preference.find()
-      .populate('student', 'firstName lastName studentId stream gpa gender')
-      .populate('department', 'name deptID capacity')
-      .sort({ priority: 1, 'student.totalScore': -1 });
+    const allPreferences = await Preference.find()
+      .populate('student', 'studentId firstName middleName stream region gpa cgpa totalScore entranceScore')
+      .populate('department', 'name')
+      .sort({priority: 1 });
 
-    res.json(preferences);
+    // Group by student
+    const preferencesByStudent = {};
+    
+    allPreferences.forEach(pref => {
+          if (!pref.student) {
+          console.warn('Preference missing student:', pref._id);
+          return;
+          }
+      const studentId = pref.student._id.toString();
+      if (!preferencesByStudent[studentId]) {
+        preferencesByStudent[studentId] = {
+          _id: studentId,
+          firstName: pref.student.firstName,
+          middleName: pref.student.middleName,
+          studentId: pref.student.studentId,
+          stream:pref.student.stream,
+          region:pref.student.region,
+          gpa:pref.student.gpa,
+          entranceScore:pref.student.entranceScore,
+          totalScore:pref.student.totalScore,
+          priority1: '',
+          priority2: '',
+          priority3: '',
+          priority4: '',
+          priority5: '',
+          priority6:''
+        };
+      }
+      
+      // Assign department to priority column
+      preferencesByStudent[studentId][`priority${pref.priority}`] = pref.department.name;
+    });
+
+    const result = Object.values(preferencesByStudent);
+    const sorted = result.sort((a,b)=>b.totalScore - a.totalScore)
+    res.json(sorted);
+    console.log(sorted)
+    
   } catch (error) {
-    console.error('Error fetching preferences:', error);
+    console.error('Error:', error);
     res.status(500).json({ error: 'Failed to fetch preferences' });
   }
 });
 
 
+//the ff api used to show the placements of students for admin
+app.get('/api/admin/viewPlacements',async(req,res)=>{
+  try {
+    const placedStudents = await Student.find({ 
+      Department: { $ne: null } 
+    })
+    .populate('Department', 'name deptID')
+    .select('studentId firstName middleName gender gpa entranceScore totalScore Department')
+    .sort({ totalScore: -1 });
+
+    res.json(placedStudents);
+  } catch (error) {
+    console.error('Error fetching placed students:', error);
+    res.status(500).json({ error: 'Failed to fetch placed students' });
+  }
+})
 
 const PORT = process.env.PORT || 5000;
 
