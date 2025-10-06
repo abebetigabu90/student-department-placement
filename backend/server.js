@@ -226,6 +226,24 @@ app.put('/api/students/:id/updateGrades', async (req, res) => {
 
 
 
+
+// routes/preferences.js
+Router.get('/api/admin/view/preferences', async (req, res) => {
+  try {
+    const preferences = await Preference.find()
+      .populate('student', 'firstName lastName studentId stream gpa gender')
+      .populate('department', 'name deptID capacity')
+      .sort({ priority: 1, 'student.totalScore': -1 });
+
+    res.json(preferences);
+  } catch (error) {
+    console.error('Error fetching preferences:', error);
+    res.status(500).json({ error: 'Failed to fetch preferences' });
+  }
+});
+
+
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
