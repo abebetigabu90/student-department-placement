@@ -81,7 +81,8 @@ disability: {
     default: null
   },
   Department: { 
-    type: String, 
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Department", 
     default: null 
   },
   totalScore: { 
