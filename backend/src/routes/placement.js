@@ -7,36 +7,45 @@ const Router = express.Router();
 // POST /api/placement/run - Run the placement algorithm (admin only)
 // Router.post('/run', adminAuth, runPlacement);
 
-
 Router.post('/runNaturaFirstSem', async (req, res) => {
   try {
-    console.log('Starting Natural Science placement...');
+    console.log('🚀 Starting placement generation...');
     
-    // Run all three functions in sequence
-    const result1 = await GenplacementForFirstSemNatural();
-    console.log('First placement done');
+    // Run all three functions
+    const placementResult = await GenplacementForFirstSemNatural();
+    console.log('✅ Placement generation completed');
     
-    const result2 = await femaleQuota_AdjustmentForNaturalSem1();
-    console.log('Female quota done');
+    const quotaResult = await femaleQuota_AdjustmentForNaturalSem1();
+    console.log('✅ Female quota adjustment completed');
     
-    const result3 = await placementForUnplacedFirstSemNatural();
-    console.log('Unplaced students placement completely done');
+    const unplacedResult = await placementForUnplacedFirstSemNatural();
+    console.log('✅ Unplaced students placement completed');
     
+    // Send response matching EXACT return structures
     res.json({
       success: true,
-      message: 'Placement process completed',
-      results: {
-        initial: result1,
-        femaleQuota: result2,
-        unplaced: result3
+      message: 'All placement operations completed successfully',
+      
+      // Match exact return structures from your functions
+      placementResult: placementResult, // Has: message, placements
+      quotaResult: quotaResult,         // Has: success, processed, skipped, errors, message  
+      unplacedResult: unplacedResult,   // Has: success, placed, total, message
+      
+      // Add calculated totals for easy display
+      totals: {
+        totalInitialPlacements: placementResult.placements ? placementResult.placements.length : 0,
+        totalQuotaReplacements: quotaResult.processed || 0,
+        totalUnplacedPlaced: unplacedResult.placed || 0,
+        overallStudentsPlaced: (placementResult.placements ? placementResult.placements.length : 0) + (unplacedResult.placed || 0)
       }
     });
     
   } catch (error) {
-    console.error('Error:', error);
+    console.error('❌ Operation failed:', error);
     res.status(500).json({ 
       success: false,
-      error: error.message
+      error: 'Placement process failed', 
+      details: error.message
     });
   }
 });
