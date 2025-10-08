@@ -24,6 +24,7 @@ import ViewStudents from './pages/viewStudents'
 import FirstSemPlacement from './components/NatFirstSem'
 import AdminPreferencesPage from './pages/adminViewPreferences'
 import ViewPlacements from './pages/adminViewPlacements'
+import ImportStudents from './components/importStudents'
 function App() {
   return (
 
@@ -55,6 +56,7 @@ function App() {
                 <Route path="/admin/runFistSemPlacement" element={<FirstSemPlacement/>}/>
                 <Route path="/admin/view/preferences" element={<AdminPreferencesPage/>}/>
                 <Route path="/admin/view/placements" element={<ViewPlacements/>}/>
+                <Route path="/admin/import/students" element={<ImportStudents/>}/>
                 {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
                 {/* <Route path="/students" element={<Students />} /> */}
                 {/* <Route path="/students/add" element={<AddStudent />} /> */}

@@ -297,6 +297,96 @@ app.get('/api/admin/viewPlacements',async(req,res)=>{
   }
 })
 
+
+//the ff api is used for file upload of student
+// routes/students.js
+import multer from 'multer';
+import XLSX from 'xlsx';
+// Configure multer for file upload
+const upload = multer({ 
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.includes('excel') || file.mimetype.includes('spreadsheet')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Please upload an Excel file'));
+    }
+  }
+});
+
+// Import students route
+app.post('/api/admin/import/students', upload.single('excelFile'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Read the uploaded Excel file
+    const workbook = XLSX.readFile(req.file.path);
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+    console.log(`Processing ${jsonData.length} students from uploaded file`);
+
+    const students = [];
+    let errorCount = 0;
+
+    // Process each row
+    for (let i = 0; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      
+      try {
+        // Check required fields
+        if (!row.firstname) throw new Error('Missing firstname');
+        if (!row.IDNo) throw new Error('Missing student ID');
+        if (!row.region) throw new Error('Missing region');
+        if (!row.Stream) throw new Error('Missing stream');
+        if (!row.Gender) throw new Error('Missing gender');
+        if (!row.CGPA) throw new Error('Missing CGPA');
+        if (!row.G12) throw new Error('Missing entrance score (G12)');
+        if (!row.Total70) throw new Error('Missing total score');
+
+        const student = {
+          firstName: row.firstname,
+          middleName: row.middlename,
+          lastName: row.lastName,
+          studentId: row.IDNo,
+          region: row.region,
+          stream: row.Stream,
+          gender: row.Gender,
+          gpa: row.CGPA,
+          entranceScore: row.G12,
+          totalScore: row.Total70,
+          password: (row.middlename || 'student') + '123'
+        };
+
+        students.push(student);
+      } catch (error) {
+        console.log(`Row ${i + 2} error: ${error.message}`);
+        errorCount++;
+      }
+    }
+
+    // Insert into database
+    if (students.length > 0) {
+      await Student.insertMany(students);
+    }
+
+    res.json({
+      message: `Imported ${students.length} students successfully${errorCount > 0 ? `, ${errorCount} records skipped due to errors` : ''}`,
+      imported: students.length,
+      errors: errorCount
+    });
+
+  } catch (error) {
+    console.error('Import error:', error);
+    res.status(500).json({ message: 'Import failed: ' + error.message });
+  }
+});
+
+
+
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

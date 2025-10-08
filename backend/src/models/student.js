@@ -13,7 +13,6 @@ const studentSchema = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: true,
     trim: true
   },
   studentId: {
@@ -71,10 +70,6 @@ disability: {
   gpa: {
     type: Number,
     default: null
-  },
-  preferences: { 
-    type: [String], 
-    default: [] 
   },
   cgpa: { 
     type: Number, 
