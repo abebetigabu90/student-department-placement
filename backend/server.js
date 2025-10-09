@@ -16,8 +16,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
-app.use('/api/departments', departmentRoutes);
-app.use('/api/placement', placementRouter);
+//app.use('/api/admin/GetDepartments', departmentRoutes);
+app.use('/api/admin/placement', placementRouter);
 app.use('/api/admin/setting',adminRoutes);
 
 app.post('/logout',async(req,res)=>{

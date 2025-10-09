@@ -52,7 +52,7 @@ Router.post('/runNaturaFirstSem', async (req, res) => {
 
 
 // Add this to your Express routes
-Router.delete('/clear-placements', async (req, res) => {
+Router.delete('/ClearPlacements', async (req, res) => {
     const result = await clearPlacements();
     res.json(result);
 });

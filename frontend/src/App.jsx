@@ -26,6 +26,7 @@ import AdminPreferencesPage from './pages/adminViewPreferences'
 import ViewPlacements from './pages/adminViewPlacements'
 import ImportStudents from './components/importStudents'
 import PreferenceSettingPage from './pages/adminPreferenceSetting'
+import ClearPlacements from './pages/adminClearAllPlacement'
 function App() {
   return (
 
@@ -59,6 +60,7 @@ function App() {
                 <Route path="/admin/view/placements" element={<ViewPlacements/>}/>
                 <Route path="/admin/import/students" element={<ImportStudents/>}/>
                 <Route path="/admin/preference/setting" element={<PreferenceSettingPage/>}/>
+                <Route path="/admin/clear/AllPlacements" element={<ClearPlacements/>}/>
                 {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
                 {/* <Route path="/students" element={<Students />} /> */}
                 {/* <Route path="/students/add" element={<AddStudent />} /> */}
