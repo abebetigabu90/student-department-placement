@@ -14,7 +14,10 @@ const clearPlacements = async () => {
                 { 
                     $set: { 
                         Department: null, 
-                        isPlaced: false 
+                        isAssigned: false,
+                        isEngineering: false,
+                        isOtherNatural: false,
+                        isOtherSocial: false
                     } 
                 }
             ),
