@@ -1,6 +1,4 @@
 import mongoose from 'mongoose';
-import bcrypt from 'bcryptjs';
-
 const studentSchema = new mongoose.Schema({
   firstName: {
     type: String,
@@ -58,11 +56,6 @@ disability: {
   enum: ['none', 'None', 'hearing', 'visual', 'physical', 'other'],
   default: 'none',
 },
-
-  isPlaced: {
-    type: Boolean,
-    default: false
-  },
   entranceScore: {
     type: Number,
     default:null
@@ -84,9 +77,27 @@ disability: {
     type: Number, 
     default: null
   },
-}, {
+  isAssigned: {
+  type: Boolean,
+  default:false
+  },
+  isPreEngineering: {
+  type: Boolean,
+  default:false
+  },
+  isOtherNatural: {
+  type: Boolean,
+  default:false
+  },
+  isOtherSocial: {
+  type: Boolean,
+  default:false
+  }
+},
+ {
   timestamps: true
-});
+},
+);
 export default mongoose.model('Student', studentSchema, 'Student');
 
 

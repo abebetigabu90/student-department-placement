@@ -7,6 +7,7 @@ import Student from '../models/student.js'
 import Admin from '../models/Admin.js';
 import Preference from '../models/preferences.js'
 import Department from '../models/Department.js'
+import PreferenceSetting from '../models/PreferenceSetting.js'
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
@@ -132,6 +133,33 @@ router.post('/create-student', async (req, res) => {
   }
 });
 
+//the ff api enable admin to set the preference settings
+// Get current settings
+router.get('/preferenceSetting', async (req, res) => {
+  try{  const setting = await PreferenceSetting.findOne() || new PreferenceSetting();
+    res.json(setting);}
+  catch(e){
+    console.log('get preferences api error')
+    res.status(500).json({error:'get preferences api error'})
+  }
+});
+// Update settings
+router.put('/preferenceSetting', async (req, res) => {
+ try {const existing = await PreferenceSetting.findOne();
+      if (existing) {
+        existing.isFirstSemPrefEnabled = req.body.isFirstSemPrefEnabled;
+        existing.isSecSemPrefEnabled = req.body.isSecSemPrefEnabled;
+        await existing.save();
+        return res.json(existing);
+      } else {
+        const newSetting = await PreferenceSetting.create(req.body);
+        return res.json(newSetting);
+      }}
+   catch(e) {
+    res.status(500).json({error:'update preferences api error'})
+    console.log('update preferences api error')
+   }
+});
 // GET: fetch all students
 router.get('/viewStudents',async(req,res)=>{
 try {
@@ -144,18 +172,18 @@ try {
 
 
 
-// ✅ Protected test route
-router.get('/protected', adminAuth, (req, res) => {
-  res.json({ message: `Welcome ${req.admin.email}` });
-});
+// // ✅ Protected test route
+// router.get('/protected', adminAuth, (req, res) => {
+//   res.json({ message: `Welcome ${req.admin.email}` });
+// });
 
-// ✅ CSV upload route (with file upload middleware)
-router.post(
-  '/upload-csv',
-  adminAuth,
-  upload.single('file'), // This handles the file upload
-  uploadStudentCSV       // This processes and saves the data
-);
+// // ✅ CSV upload route (with file upload middleware)
+// router.post(
+//   '/upload-csv',
+//   adminAuth,
+//   upload.single('file'), // This handles the file upload
+//   uploadStudentCSV       // This processes and saves the data
+// );
 
 
 export default router;
