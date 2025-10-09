@@ -18,6 +18,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/student', studentRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/placement', placementRouter);
+app.use('/api/admin/setting',adminRoutes);
 
 app.post('/logout',async(req,res)=>{
   try{res.json({message:'loged out successfully!'})}
@@ -235,7 +236,7 @@ app.get('/api/admin/view/stuPreferences', async (req, res) => {
       .populate('department', 'name')
       .sort({priority: 1 });
 
-    // Group by student
+    // Group by student      
     const preferencesByStudent = {};
     
     allPreferences.forEach(pref => {
