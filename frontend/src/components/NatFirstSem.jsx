@@ -12,7 +12,7 @@ const FirstSemPlacement = () => {
     setResult(null);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/placement/runNaturaFirstSem');
+      const response = await axios.post('http://localhost:5000/api/admin/placement/runNaturaFirstSem');
       setResult(response.data);
     } catch (err) {
       setError(err.response?.data || { message: 'Failed to run placement process' });

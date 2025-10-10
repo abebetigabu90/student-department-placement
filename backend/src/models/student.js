@@ -36,24 +36,23 @@ const studentSchema = new mongoose.Schema({
   region: {
     type: String,
     required: true,
-    enum: [
-      'Addis Ababa',
-      'Afar',
-      'Amhara',
-      'Benishangul-Gumuz',
-      'Dire Dawa',
-      'Gambela',
-      'Harari',
-      'Oromia',
-      'Sidama',
-      'Somali',
-      'Southern Nations, Nationalities, and Peoples\' Region (SNNPR)',
-      'Tigray'
-    ]
+    // enum: [
+    //   'Addis Ababa',
+    //   'Afar',
+    //   'Amhara',
+    //   'Benishangul-Gumuz',
+    //   'Dire Dawa',
+    //   'Gambela',
+    //   'Harari',
+    //   'Oromia',
+    //   'Sidama',
+    //   'Somali',
+    //   'Southern Nations, Nationalities, and Peoples\' Region (SNNPR)',
+    //   'Tigray'
+    // ]
   },
 disability: {
   type: String,
-  enum: ['none', 'None', 'hearing', 'visual', 'physical', 'other'],
   default: 'none',
 },
   entranceScore: {
@@ -81,7 +80,7 @@ disability: {
   type: Boolean,
   default:false
   },
-  isEngineering: {
+  isPreEngineering: {
   type: Boolean,
   default:false
   },

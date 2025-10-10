@@ -346,12 +346,14 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
         if (!row.CGPA) throw new Error('Missing CGPA');
         if (!row.G12) throw new Error('Missing entrance score (G12)');
         if (!row.Total70) throw new Error('Missing total score');
+        if (!row.disability) throw new Error('Missing disability');
 
         const student = {
           firstName: row.firstname,
           middleName: row.middlename,
           lastName: row.lastName,
           studentId: row.IDNo,
+          disability:row.disability,
           region: row.region,
           stream: row.Stream,
           gender: row.Gender,
