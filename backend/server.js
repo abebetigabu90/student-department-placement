@@ -388,7 +388,75 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
 });
 
 
-
+//the ff api used for admin to manage departments
+//the ff api used to view departments
+app.get('/api/view/departments',async(req,res)=>{
+  try {
+    const departments = await Department.find().sort({ createdAt: -1 });
+    res.json(departments);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+})
+//the ff api used to updated departments
+app.put('/api/update/department/:id', async (req, res) => {
+  try {
+    const department = await Department.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    
+    if (!department) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+    res.json(department);
+  } catch (error) {
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      res.status(400).json({ message: `${field} already exists` });
+    } else if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      res.status(400).json({ message: errors.join(', ') });
+    } else {
+      res.status(400).json({ message: error.message });
+    }
+  }
+});
+//the ff api is used to create departments
+app.post('/api/create/department', async (req, res) => {
+  try {
+    console.log('Creating department:', req.body);
+    const department = new Department(req.body);
+    const savedDepartment = await department.save();
+    res.status(201).json(savedDepartment);
+  } catch (error) {
+    console.log('Create error:', error);
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      res.status(400).json({ message: `${field} already exists` });
+    } else if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      res.status(400).json({ message: errors.join(', ') });
+    } else {
+      res.status(400).json({ message: error.message });
+    }
+  }
+});
+//the ff api used to delete departments
+app.delete('/api/delete/department/:id',async(req,res)=>{
+    try {
+    const department = await Department.findByIdAndDelete(req.params.id);
+    
+    if (!department) {
+      return res.status(404).json({ message: 'Department not found' });
+    }
+    
+    res.json({ message: 'Department deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+})
 
 const PORT = process.env.PORT || 5000;
 
