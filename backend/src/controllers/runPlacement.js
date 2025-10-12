@@ -11,8 +11,8 @@ export const GenplacementForFirstSemNatural = async () => {
         console.log(chalk.yellow.bold("🔍 Starting placement query..."));
         const naturalFirstSem = await Student.find({
             stream: { $regex: /^N/i }, // ^N means starts with N, /i makes it case insensitive
-            gpa: { $exists: true },
-            cgpa: { $in: [null, undefined] },
+            // gpa: { $exists: true },
+            // cgpa: { $in: [null, undefined] },
             isAssigned: false,
             totalScore:{ $exists: true }
         });
@@ -21,15 +21,15 @@ export const GenplacementForFirstSemNatural = async () => {
             
             // Debug each condition separately
             const streamCheck = await Student.countDocuments({stream: { $regex: /^N/i} });
-            const gpaCheck = await Student.countDocuments({ gpa: { $exists: true } });
-            const cgpaCheck = await Student.countDocuments({cgpa: { $in: [null, undefined] }});
+            // const gpaCheck = await Student.countDocuments({ gpa: { $exists: true } });
+            // const cgpaCheck = await Student.countDocuments({cgpa: { $in: [null, undefined] }});
             const deptCheck = await Student.countDocuments({isAssigned: false});
             const scoreCheck = await Student.countDocuments({ totalScore: { $exists: true } });
             
             console.log(chalk.yellow(`🔍 Condition breakdown:`));
             console.log(chalk.yellow(`   - Stream 'Natural Science': ${streamCheck} students`));
-            console.log(chalk.yellow(`   - Has GPA: ${gpaCheck} students`));
-            console.log(chalk.yellow(`   - No CGPA: ${cgpaCheck} students`));
+            // console.log(chalk.yellow(`   - Has GPA: ${gpaCheck} students`));
+            // console.log(chalk.yellow(`   - No CGPA: ${cgpaCheck} students`));
             console.log(chalk.yellow(`   - No Department: ${deptCheck} students`));
             console.log(chalk.yellow(`   - Has totalScore: ${scoreCheck} students`));
             
@@ -79,16 +79,16 @@ export const GenplacementForFirstSemNatural = async () => {
                 };
 
                 // If department is engineering, set isEngineering flag
-                if (updatedDept.deptID === "PreEngineering") {
-                    studentUpdate.isPreEngineering = true;
-                }
-                if (updatedDept.deptID === "otherNatura") {
-                    studentUpdate.isOtherNatural = true;
-                }
-                if (updatedDept.deptID === "otherSocial") {
-                    studentUpdate.isOtherSocial = true;
-                }
-                // Update the student in a single operation
+                // if (updatedDept.deptID === "PreEngineering") {
+                //     studentUpdate.isPreEngineering = true;
+                // }
+                // if (updatedDept.deptID === "otherNatura") {
+                //     studentUpdate.isOtherNatural = true;
+                // }
+                // if (updatedDept.deptID === "otherSocial") {
+                //     studentUpdate.isOtherSocial = true;
+                // }
+                // // Update the student in a single operation
                 await Student.findByIdAndUpdate(stu._id, studentUpdate);
 
                 console.log(`Student ${stu._id} assigned to ${updatedDept._id} successfully.`);
@@ -130,7 +130,8 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
         console.log('🎯 Starting female quota adjustment for Natural Science departments...');
         
         const departments = await Department.find({
-            name: {$in: [/^computer science$/i, /^medicine$/i, /^pharmacy$/i, /^other natural$/i, /^IT$/i, /^engineering$/i]}
+            PrefTimeCategory:'FirstSem'
+            // name: {$in: [/^computer science$/i, /^medicine$/i, /^pharmacy$/i, /^other natural$/i, /^IT$/i, /^engineering$/i]}
         });
 
         let totalProcessed = 0;
@@ -142,7 +143,7 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
                 console.log(chalk.yellow(`\nProcessing department: ${dept.name}`));
                 
                 // Check current department stats
-                const females = await Student.find({ gender:{ $regex: /^F/i }, Department: dept._id });
+                const females = await Student.find({ gender:{ $regex: /^F/i }, Department: dept._id }).populate('Department');;
                 const males = await Student.find({ gender: { $regex: /^M/i }, Department: dept._id }).populate('Department');
                 const totalStudentsOfdept = females.length + males.length;
                 const currentFemalesCount = females.length;
@@ -202,9 +203,9 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
                     // Remove male student from department (but keep student record)
                 const malestudentUpdate = {Department: null, isAssigned: false};
                 const maleDept = sortedMales[i].Department;
-                if (maleDept.deptID === "PreEngineering") {malestudentUpdate.isPreEngineering = false;}
-                if (maleDept.deptID === "otherNatura") {malestudentUpdate.isOtherNatural = false;}   
-                if (maleDept.deptID === "otherSocial") {malestudentUpdate.isOtherSocial = false;}              
+                // if (maleDept.deptID === "PreEngineering") {malestudentUpdate.isPreEngineering = false;}
+                // if (maleDept.deptID === "otherNatural") {malestudentUpdate.isOtherNatural = false;}   
+                // if (maleDept.deptID === "otherSocial") {malestudentUpdate.isOtherSocial = false;}              
                 // Update the student in a single operation & Delete male student's placement
                 await Student.findByIdAndUpdate(sortedMales[i]._id, malestudentUpdate); 
                 await Placement.deleteOne( { student: sortedMales[i]._id } );   
@@ -215,9 +216,9 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
                    };
 
                 // If department is engineering, set isEngineering flag
-                if (dept.deptID === "PreEngineering") {femalestudentUpdate.isPreEngineering = true;}
-                if (dept.deptID === "otherNatura") { femalestudentUpdate.isOtherNatural = true; }
-                if (dept.deptID === "otherSocial") {femalestudentUpdate.isOtherSocial = true;}             
+                // if (dept.deptID === "PreEngineering") {femalestudentUpdate.isPreEngineering = true;}
+                // if (dept.deptID === "otherNatura") { femalestudentUpdate.isOtherNatural = true; }
+                // if (dept.deptID === "otherSocial") {femalestudentUpdate.isOtherSocial = true;}             
                 // Update the student in a single operation & assign female student's placement
                 await Student.findByIdAndUpdate(femalesToProcess[i].student._id, femalestudentUpdate);
                         const placement = new Placement({
@@ -327,15 +328,15 @@ export const placementForUnplacedFirstSemNatural = async () => {
                 };
 
                 // If department is engineering, set isEngineering flag
-                if (updatedDept.deptID === "PreEngineering") {
-                    studentUpdate.isPreEngineering = true;
-                }
-                if (updatedDept.deptID === "otherNatura") {
-                    studentUpdate.isOtherNatural = true;
-                }
-                if (updatedDept.deptID === "otherSocial") {
-                    studentUpdate.isOtherSocial = true;
-                }
+                // if (updatedDept.deptID === "PreEngineering") {
+                //     studentUpdate.isPreEngineering = true;
+                // }
+                // if (updatedDept.deptID === "otherNatura") {
+                //     studentUpdate.isOtherNatural = true;
+                // }
+                // if (updatedDept.deptID === "otherSocial") {
+                //     studentUpdate.isOtherSocial = true;
+                // }
                 // Update the student in a single operation
                 await Student.findByIdAndUpdate(student._id, studentUpdate);
                 console.log(`✅ Placed ${student.firstName} in ${department.name} (Choice #${preference.priority})`);
