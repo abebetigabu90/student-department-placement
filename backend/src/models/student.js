@@ -80,18 +80,18 @@ disability: {
   type: Boolean,
   default:false
   },
-  isPreEngineering: {
-  type: Boolean,
-  default:false
-  },
-  isOtherNatural: {
-  type: Boolean,
-  default:false
-  },
-  isOtherSocial: {
-  type: Boolean,
-  default:false
-  }
+  // isPreEngineering: {
+  // type: Boolean,
+  // default:false
+  // },
+  // isOtherNatural: {
+  // type: Boolean,
+  // default:false
+  // },
+  // isOtherSocial: {
+  // type: Boolean,
+  // default:false
+  // }
 },
  {
   timestamps: true
