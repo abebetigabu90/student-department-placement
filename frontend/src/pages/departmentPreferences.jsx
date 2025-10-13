@@ -5,46 +5,60 @@ import axios from "axios";
 const DepartmentPreferencePage = () => {
   const [studentInfo, setStudentInfo] = useState(null);
   const [departments, setDepartments] = useState([]);
-  const [choices, setChoices] = useState({ choice1: "", choice2: "", choice3: "", choice4: "",choice5:"",choice6:"" });
+  const [preferences, setPreferences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchData() {
+    async function loadData() {
       try {
-        // Fetch student info
         const storedUserData = localStorage.getItem("userData");
-        if (storedUserData) {
-          const parsedUserData = JSON.parse(storedUserData);
-          const studentId = parsedUserData.studentId;
-          alert(studentId);
-          const studentRes = await axios.get(`http://localhost:5000/api/student/${studentId}`);
-          setStudentInfo(studentRes.data);
-        } else {
-          alert('Student id cannot be found in localStorage');
+        if (!storedUserData) {
+          alert('Please log in first');
+          return;
         }
+
+        const userData = JSON.parse(storedUserData);
+        const studentId = userData.studentId;
+
+        // Get student info
+        const studentRes = await axios.get(`http://localhost:5000/api/student/${studentId}`);
+        const studentData = studentRes.data;
+        setStudentInfo(studentData);
+
+        // Get departments for student's stream
+        const deptRes = await axios.get(`http://localhost:5000/api/departments/FirstSem/${studentId}`);
+        const availableDepts = deptRes.data;
         
-        // Fetch departments
-        const deptRes = await axios.get("http://localhost:5000/api/departments");
-        if (deptRes.data?.length > 0) {
-          setDepartments(deptRes.data);
+        if (availableDepts.length > 0) {
+          setDepartments(availableDepts);
+          // Create empty preferences array matching department count
+          setPreferences(Array(availableDepts.length).fill(""));
         } else {
-          setErrorMsg("No departments available for your stream.");
+          setErrorMsg(`No departments found for ${studentData.stream} stream`);
         }
-      } catch (err) {
-        console.error(err);
-        setErrorMsg("Failed to load data. Please try again later.");
+
+      } catch (error) {
+          if (error.response && error.response.status === 404) {
+          setDepartments([]); // no departments
+          setErrorMsg(error.response.data.message || 'No departments available.');
+        } else {
+          setErrorMsg('Server error. Please try again later.');
+        }
       } finally {
         setLoading(false);
       }
     }
-    fetchData();
+
+    loadData();
   }, []);
 
-  const handleChoiceChange = (e) => {
-    setChoices({ ...choices, [e.target.name]: e.target.value });
+  const handlePreferenceChange = (index, departmentName) => {
+    const newPreferences = [...preferences];
+    newPreferences[index] = departmentName;
+    setPreferences(newPreferences);
   };
 
   const viewRanking = (departmentName) => {
@@ -56,50 +70,42 @@ const DepartmentPreferencePage = () => {
   };
 
   const submitPreferences = async () => {
-    // Get studentId from localStorage
     const storedUserData = localStorage.getItem("userData");
     if (!storedUserData) {
-      alert("Student data not found. Please log in again.");
+      alert("Please log in again.");
       return;
     }
 
-    const parsedUserData = JSON.parse(storedUserData);
-    const studentId = parsedUserData.studentId;
+    const userData = JSON.parse(storedUserData);
+    const studentId = userData.studentId;
 
-    // Filter out empty choices and create preference objects
-    const selectedChoices = Object.entries(choices)
-      .map(([key, value], index) => ({
-        priority: index + 1,
-        department: value,
-      }))
-      .filter(item => item.department !== "");
-
-    // Validate all 4 choices are selected
-    if (selectedChoices.length !== 6) {
-      alert("Please select all 6 department choices.");
+    // Check if all preferences are selected
+    if (preferences.includes("")) {
+      alert(`Please select all ${departments.length} preferences`);
       return;
     }
 
     // Check for duplicates
-    const departmentNames = selectedChoices.map(choice => choice.department);
-    if (new Set(departmentNames).size !== departmentNames.length) {
-      alert("Each choice must be a different department.");
+    if (new Set(preferences).size !== preferences.length) {
+      alert("Please select different departments for each preference");
       return;
     }
 
     setSubmitting(true);
     try {
+      const preferencesToSubmit = preferences.map((departmentName, index) => ({
+        priority: index + 1,
+        department: departmentName
+      }));
+
       await axios.post(
         `http://localhost:5000/api/student/preferences/${studentId}`,
-        { choices: selectedChoices }
+        { choices: preferencesToSubmit }
       );
+      
       alert("Preferences submitted successfully!");
-      // Optional: Reset choices or navigate to another page
-      // setChoices({ choice1: "", choice2: "", choice3: "", choice4: "" });
-    } catch (err) {
-      console.error(err);
-      const errorMessage = err.response?.data?.message || "Failed to submit preferences. Please try again.";
-      alert(errorMessage);
+    } catch (error) {
+      alert("Failed to submit preferences");
     } finally {
       setSubmitting(false);
     }
@@ -107,78 +113,80 @@ const DepartmentPreferencePage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4">Loading department preferences...</p>
+          <p className="mt-4">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4 flex flex-col items-center">
-      <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-3xl">
-        <div className="text-center border-b-2 border-blue-500 pb-4 mb-4">
-          <h1 className="text-2xl font-bold">Department Preference Selection</h1>
+    <div className="min-h-screen bg-gray-100 p-4">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        
+        <div className="text-center mb-6">
+          <h1 className="text-2xl font-bold">Department Preferences</h1>
+          {studentInfo && (
+            <p className="text-blue-600">Stream: {studentInfo.stream}</p>
+          )}
         </div>
 
         {studentInfo && (
-          <div className="flex justify-around bg-gradient-to-r from-blue-100 to-purple-100 p-4 rounded-md mb-6 text-center">
-            <div>
-              <h4 className="text-purple-700 font-semibold">Your GPA</h4>
-              <p className="font-bold text-xl">{studentInfo.gpa}</p>
-            </div>
-            <div>
-              <h4 className="text-purple-700 font-semibold">Grade 12 Exam</h4>
-              <p className="font-bold text-xl">{studentInfo.entranceScore}</p>
-            </div>
-            <div>
-              <h4 className="text-purple-700 font-semibold">Total Score</h4>
-              <p className="font-bold text-xl">{studentInfo.totalScore}</p>
+          <div className="bg-blue-50 p-4 rounded-lg mb-6">
+            <div className="flex justify-between text-center">
+              <div>
+                <p className="text-sm">GPA</p>
+                <p className="font-bold">{studentInfo.gpa}</p>
+              </div>
+              <div>
+                <p className="text-sm">Entrance Score</p>
+                <p className="font-bold">{studentInfo.entranceScore}</p>
+              </div>
+              <div>
+                <p className="text-sm">Total Score</p>
+                <p className="font-bold">{studentInfo.totalScore}</p>
+              </div>
             </div>
           </div>
         )}
 
         {errorMsg ? (
           <div className="text-center">
-            <p className="text-red-600 font-semibold mb-4">{errorMsg}</p>
+            <p className="text-red-600">{errorMsg}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded"
             >
-              Retry
+              Try Again
             </button>
           </div>
         ) : (
           <div>
             <h3 className="text-lg font-semibold mb-4">
-              Select your department preferences (in order of priority):
+              Rank all {departments.length} departments:
             </h3>
-            
-            {["choice1", "choice2", "choice3", "choice4","choice5","choice6"].map((key, index) => (
-              <div
-                key={key}
-                className="flex items-center mb-4 p-3 bg-gray-100 rounded-md border border-gray-300"
-              >
-                <span className="font-bold min-w-[90px]">{index + 1}. Choice:</span>
+
+            {preferences.map((departmentName, index) => (
+              <div key={index} className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded">
+                <span className="font-bold w-20">#{index + 1}:</span>
                 <select
-                  name={key}
-                  value={choices[key]}
-                  onChange={handleChoiceChange}
-                  className="flex-1 mx-3 p-2 border border-gray-400 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={departmentName}
+                  onChange={(e) => handlePreferenceChange(index, e.target.value)}
+                  className="flex-1 p-2 border rounded"
                 >
-                  <option value="">-- Select Department --</option>
+                  <option value="">Select Department</option>
                   {departments.map((dept) => (
                     <option key={dept._id} value={dept.name}>
-                      {dept.name} (Capacity: {dept.capacity})
+                      {dept.name}
                     </option>
                   ))}
                 </select>
                 <button
-                  onClick={() => viewRanking(choices[key])}
-                  disabled={!choices[key]}
-                  className="px-3 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+                  onClick={() => viewRanking(departmentName)}
+                  disabled={!departmentName}
+                  className="px-3 py-2 bg-purple-500 text-white rounded disabled:bg-gray-400"
                 >
                   View Ranking
                 </button>
@@ -188,23 +196,22 @@ const DepartmentPreferencePage = () => {
             <div className="flex justify-center gap-4 mt-6">
               <button
                 onClick={() => navigate(-1)}
-                className="px-6 py-3 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition-all"
+                className="px-6 py-2 bg-gray-500 text-white rounded"
               >
                 Back
               </button>
               <button
                 onClick={submitPreferences}
                 disabled={submitting}
-                className="px-6 py-3 bg-gradient-to-r from-blue-500 to-green-400 text-white rounded-lg font-bold hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                className="px-6 py-2 bg-green-500 text-white rounded disabled:bg-gray-400"
               >
-                {submitting ? "Submitting..." : "Submit Preferences"}
+                {submitting ? "Submitting..." : "Submit"}
               </button>
             </div>
 
-            <div className="mt-4 text-sm text-gray-600 text-center">
-              <p>Note: Please select 6 different departments in order of your preference.</p>
-              <p>Choice 1 is your highest priority, Choice 6 is your lowest.</p>
-            </div>
+            <p className="text-center text-sm text-gray-600 mt-4">
+              You must rank all {departments.length} available departments
+            </p>
           </div>
         )}
       </div>
