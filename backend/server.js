@@ -42,21 +42,39 @@ app.get("/api/student/:id", async (req, res) => {
   }
 });
 
+//the ff api used to filter first semister student departments separately for natural and social students
+app.get('/api/departments/FirstSem/:id', async (req, res) => {
+  const studentId = req.params.id;
 
-app.get('/api/departments', async (req, res) => {
   try {
-    const departments = await Department.find({ stream: 'natural' });
+    const student = await Student.findOne({ studentId: studentId });
+    if (!student) {
+      console.error(`Student not found: ${studentId}`);
+      return res.status(404).json({ message: 'Student not found!' });
+    }
+
+    let departments;
+    if (student.stream.toLowerCase().startsWith('n')) {
+      // Natural Science stream
+      departments = await Department.find({ stream: 'natural', PrefTimeCategory: 'FirstSem' });
+    } else {
+      // Social Science stream
+      departments = await Department.find({ stream: 'social', PrefTimeCategory: 'FirstSem' });
+    }
 
     if (!departments || departments.length === 0) {
+      console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
       return res.status(404).json({ message: 'No departments recorded in the department document!' });
     }
 
     return res.status(200).json(departments);
   } catch (e) {
-    console.error(e);
+    console.error(`Error fetching departments for student ${studentId}:`, e.stack || e);
     return res.status(500).json({ error: 'Server error' });
   }
 });
+
+
 //api for submit departments and show first preference students with descending order
 app.use('/api/student',studentRoutes)
 
