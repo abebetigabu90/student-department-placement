@@ -105,7 +105,7 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
         console.log('🎯 Starting female quota adjustment for Natural Science departments...');
         
         const departments = await Department.find({
-            PrefTimeCategory:'FirstSem'
+            PrefTimeCategory:'FirstSem',stream:'natural'
         });
 
         let totalProcessed = 0;
