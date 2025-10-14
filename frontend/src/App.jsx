@@ -22,6 +22,7 @@ import DepartmentPreferencePage from './pages/departmentPreferences'
 import RankingPage from './pages/viewRanking'
 import ViewStudents from './pages/viewStudents'
 import FirstSemPlacement from './components/NatFirstSem'
+import SocialFirstSem from './components/SocialFirstSem'
 import AdminPreferencesPage from './pages/adminViewPreferences'
 import ViewPlacements from './pages/adminViewPlacements'
 import ImportStudents from './components/importStudents'
@@ -56,7 +57,8 @@ function App() {
                 <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
                 <Route path="/admin/create-students" element={<CreateStudent/>}/>
                 <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
-                <Route path="/admin/runFistSemPlacement" element={<FirstSemPlacement/>}/>
+                <Route path="/admin/runNaturalFistSemPlacement" element={<FirstSemPlacement/>}/>
+                <Route path="/admin/runSocialFistSemPlacement" element={<SocialFirstSem/>}/>
                 <Route path="/admin/view/preferences" element={<AdminPreferencesPage/>}/>
                 <Route path="/admin/view/placements" element={<ViewPlacements/>}/>
                 <Route path="/admin/import/students" element={<ImportStudents/>}/>
