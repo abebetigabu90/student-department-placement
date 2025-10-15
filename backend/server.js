@@ -9,6 +9,7 @@ import connectDB from './src/config/db.js';
 import Department from './src/models/Department.js'
 import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
+import PreferenceSetting from './src/models/PreferenceSetting.js'
 dotenv.config();
 
 const app = express();
@@ -52,23 +53,30 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
       console.error(`Student not found: ${studentId}`);
       return res.status(404).json({ message: 'Student not found!' });
     }
-
+    
     let departments;
-    if (student.stream.toLowerCase().startsWith('n')) {
-      // Natural Science stream
-      departments = await Department.find({ stream: 'natural', PrefTimeCategory: 'FirstSem' });
-    } else {
-      // Social Science stream
-      departments = await Department.find({ stream: 'social', PrefTimeCategory: 'FirstSem' });
-    }
+    const preferenceSetting = await PreferenceSetting.findOne()
+    if(preferenceSetting.isFirstSemPrefEnabled === true){
+          if (student.stream.toLowerCase().startsWith('n')) {
+            // Natural Science stream
+            departments = await Department.find({ stream: 'natural', PrefTimeCategory: 'FirstSem' });
+          } else {
+            // Social Science stream
+            departments = await Department.find({ stream: 'social', PrefTimeCategory: 'FirstSem' });
+          }
 
-    if (!departments || departments.length === 0) {
-      console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
-      return res.status(404).json({ message: 'No departments recorded in the department document!' });
-    }
+          if (!departments || departments.length === 0) {
+            console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+            return res.status(404).json({ message: 'No departments recorded in the department document!' });
+          }
 
-    return res.status(200).json(departments);
-  } catch (e) {
+          return res.status(200).json(departments);
+          }
+     else{
+      return res.json({message:'Please Wait Until We Announce The Date of Department Preference!'})
+     }     
+  }
+  catch (e) {
     console.error(`Error fetching departments for student ${studentId}:`, e.stack || e);
     return res.status(500).json({ error: 'Server error' });
   }
