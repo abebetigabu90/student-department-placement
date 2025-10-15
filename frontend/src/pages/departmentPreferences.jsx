@@ -8,6 +8,7 @@ const DepartmentPreferencePage = () => {
   const [preferences, setPreferences] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
+  const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
@@ -36,7 +37,10 @@ const DepartmentPreferencePage = () => {
           setDepartments(availableDepts);
           // Create empty preferences array matching department count
           setPreferences(Array(availableDepts.length).fill(""));
-        } else {
+        }else if(deptRes.data.message){
+          setMessage(deptRes.data.message)
+        }
+         else {
           setErrorMsg(`No departments found for ${studentData.stream} stream`);
         }
 
@@ -152,17 +156,21 @@ const DepartmentPreferencePage = () => {
           </div>
         )}
 
-        {errorMsg ? (
-          <div className="text-center">
-            <p className="text-red-600">{errorMsg}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-3 px-4 py-2 bg-blue-500 text-white rounded"
-            >
-              Try Again
-            </button>
-          </div>
-        ) : (
+            {errorMsg ? (
+              <div className="text-center">
+                <p className="text-red-600">{errorMsg}</p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-3 px-4 py-2 bg-blue-500 text-white rounded"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : message ? (
+              <div className="text-center">
+                <h1 className="text-red-600">{message}</h1>
+              </div>
+            ) : (
           <div>
             <h3 className="text-lg font-semibold mb-4">
               Rank all {departments.length} departments:
