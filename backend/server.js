@@ -48,7 +48,7 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
   const studentId = req.params.id;
 
   try {
-    const student = await Student.findOne({ studentId: studentId });
+    const student = await Student.findOne({ studentId: studentId }).populate('Department');
     if (!student) {
       console.error(`Student not found: ${studentId}`);
       return res.status(404).json({ message: 'Student not found!' });
@@ -57,21 +57,58 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
     let departments;
     const preferenceSetting = await PreferenceSetting.findOne()
     if(preferenceSetting.isFirstSemPrefEnabled === true){
-          if (student.stream.toLowerCase().startsWith('n')) {
+          if (student.stream.toLowerCase().startsWith('n') && student.isAssigned === false) {
             // Natural Science stream
-            departments = await Department.find({ stream: 'natural', PrefTimeCategory: 'FirstSem' });
-          } else {
-            // Social Science stream
-            departments = await Department.find({ stream: 'social', PrefTimeCategory: 'FirstSem' });
-          }
+               departments = await Department.find({ stream: 'natural', PrefTimeCategory: 'FirstSem' });
+               if (!departments || departments.length === 0) {
+               console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+               return res.status(404).json({ message: 'No departments recorded in the department document!' });
+                 }
 
-          if (!departments || departments.length === 0) {
-            console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
-            return res.status(404).json({ message: 'No departments recorded in the department document!' });
+               return res.status(200).json(departments);
+              }
+          if(student.stream.toLowerCase().startsWith('s') && student.isAssigned === false) {
+                // Social Science stream
+                departments = await Department.find({ stream: 'social', PrefTimeCategory: 'FirstSem' });
+                if (!departments || departments.length === 0) {
+                console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+                return res.status(404).json({ message: 'No departments recorded in the department document!' });
+                }
+                return res.status(200).json(departments);
           }
+    }
+    //the ff is used to filter departments for second semister preference
+    if(preferenceSetting.isSecSemPrefEnabled === true){
+          if (student.Department.PrefTypeCategory === 'PreEngineering') {
+            //  engineering preferences for the semister 2 students
+               departments = await Department.find({ PrefTypeCategory: 'PreEngineering', PrefTimeCategory: 'SecSemFirst' });
+               if (!departments || departments.length === 0) {
+               console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+               return res.status(404).json({ message: 'No departments recorded in the department document!' });
+                 }
 
-          return res.status(200).json(departments);
+               return res.status(200).json(departments);
+              }
+          if(student.Department.PrefTypeCategory === 'OtherNatural') {
+                //other natural preferences for the semister 2 students
+                departments = await Department.find({ PrefTypeCategory: 'OtherNatural', PrefTimeCategory: 'SecSemFirst' });
+                if (!departments || departments.length === 0) {
+                console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+                return res.status(404).json({ message: 'No departments recorded in the department document!' });
+                }
+                return res.status(200).json(departments);
           }
+          if(student.Department.PrefTypeCategory === 'OtherSocial') {
+                //other social preferences for the semister 2 students
+                departments = await Department.find({ PrefTypeCategory: 'OtherSocial', PrefTimeCategory: 'SecSemFirst' });
+                if (!departments || departments.length === 0) {
+                console.error(`No departments found for student ${studentId} in stream ${student.stream}`);
+                return res.status(404).json({ message: 'No departments recorded in the department document!' });
+                }
+                return res.status(200).json(departments);
+          }
+          
+    }
      else{
       return res.json({message:'Please Wait Until We Announce The Date of Department Preference!'})
      }     
