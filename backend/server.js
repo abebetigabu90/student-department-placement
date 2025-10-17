@@ -10,6 +10,7 @@ import Department from './src/models/Department.js'
 import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
+import Placement from './src/models/Placement.js'
 dotenv.config();
 
 const app = express();
@@ -520,7 +521,67 @@ app.delete('/api/delete/department/:id',async(req,res)=>{
     res.status(500).json({ message: error.message });
   }
 })
+//the ff api used for a student to show his preferences
+// routes/preferences.js
+// routes/preferences.js
+app.get('/api/my/preferences/:studentCode', async (req, res) => {
+  try {
+    // First find the student by studentCode
+    const student = await Student.findOne({ studentId: req.params.studentCode });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
 
+    // Then find preferences using the student's ObjectId
+    const preferences = await Preference.find({ student: student._id })
+      .populate("department", "name deptID")
+      .sort("priority");
+    
+    //console.log(preferences);
+    
+    res.json({
+      success: true,
+      data: preferences
+    });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching preferences"
+    });
+  }
+});
+//the ff api is used to show placement for any student
+app.get('/api/my/placement/:id',async(req,res)=>{
+  try {
+    const student = await Student.findOne({studentId:req.params.id})
+    const placement = await Placement.findOne({ student: student._id})
+      .populate('department', 'name')
+      .populate('student', 'firstName studentId')
+    if (!placement) {
+      console.log('not placed!')
+      return res.status(404).json({
+        success: false,
+        message: 'No placement found for this student'
+      });
+    }
+    res.json({
+      success: true,
+      placement: placement
+    });
+  } catch (error) {
+    console.error('Error fetching placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+})
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
