@@ -29,6 +29,7 @@ import ImportStudents from './components/importStudents'
 import PreferenceSettingPage from './pages/adminPreferenceSetting'
 import ClearPlacements from './pages/adminClearAllPlacement'
 import DepartmentAdmin from './pages/DepartmentAdmin'
+import StudentPreferences from './pages/studentPreferences'
 function App() {
   return (
 
@@ -48,6 +49,7 @@ function App() {
               <Route path="/student/dashboard" element={<StudentDashboard/>}/>
               <Route path="/student/departmentPreferences" element={<DepartmentPreferencePage/>}/>
               <Route path="/ranking/:departmentName" element={<RankingPage />} />
+              <Route path="/my/preferences" element={<StudentPreferences />} />
           {/* </Route> */}
       </Route>
       

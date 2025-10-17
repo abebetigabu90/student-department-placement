@@ -520,7 +520,40 @@ app.delete('/api/delete/department/:id',async(req,res)=>{
     res.status(500).json({ message: error.message });
   }
 })
+//the ff api used for a student to show his preferences
+// routes/preferences.js
+// routes/preferences.js
+app.get('/api/my/preferences/:studentCode', async (req, res) => {
+  try {
+    // First find the student by studentCode
+    const student = await Student.findOne({ studentId: req.params.studentCode });
+    
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        message: "Student not found"
+      });
+    }
 
+    // Then find preferences using the student's ObjectId
+    const preferences = await Preference.find({ student: student._id })
+      .populate("department", "name deptID")
+      .sort("priority");
+    
+    //console.log(preferences);
+    
+    res.json({
+      success: true,
+      data: preferences
+    });
+  } catch (error) {
+    console.error("Error fetching preferences:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching preferences"
+    });
+  }
+});
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
