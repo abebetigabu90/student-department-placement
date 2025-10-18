@@ -27,7 +27,7 @@ export default function CreateStudent() {
     middleName: "",
     lastName: "",
     studentId: "",
-    password: "",
+    // password: "",
     stream: "",
     gender: "",
     region: "",
@@ -58,7 +58,7 @@ export default function CreateStudent() {
         middleName: "",
         lastName: "",
         studentId: "",
-        password: "",
+        // password: "",
         stream: "",
         gender: "",
         region: "",
@@ -156,7 +156,7 @@ export default function CreateStudent() {
           </div>
 
           {/* Password */}
-          <div>
+          {/* <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
               Temporary Password
             </label>
@@ -170,7 +170,7 @@ export default function CreateStudent() {
               required
               className="w-full p-2 border rounded-lg"
             />
-          </div>
+          </div> */}
 
           {/* Stream - Updated to dropdown */}
           <div>
