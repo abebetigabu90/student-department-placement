@@ -30,6 +30,8 @@ import PreferenceSettingPage from './pages/adminPreferenceSetting'
 import ClearPlacements from './pages/adminClearAllPlacement'
 import DepartmentAdmin from './pages/DepartmentAdmin'
 import StudentPreferences from './pages/studentPreferences'
+import MyPlacementPage from './pages/myPlacement'
+import ChangePasswordPage from './pages/studentChangePassword'
 function App() {
   return (
 
@@ -50,6 +52,8 @@ function App() {
               <Route path="/student/departmentPreferences" element={<DepartmentPreferencePage/>}/>
               <Route path="/ranking/:departmentName" element={<RankingPage />} />
               <Route path="/my/preferences" element={<StudentPreferences />} />
+              <Route path="/my/placement" element={<MyPlacementPage />} />
+              <Route path="/student/change-password" element={<ChangePasswordPage />} />
           {/* </Route> */}
       </Route>
       
