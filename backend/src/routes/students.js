@@ -23,12 +23,13 @@ router.post('/login',async(req,res)=>{
     if (!student) {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
-
-    // Compare directly (plain text, not recommended for production)
-    if (student.password !== password) {
+     // ✅ Compare entered password with hashed one
+    const isMatch = await bcrypt.compare(password, student.password);
+    if (!isMatch) {
       return res.status(401).json({ success: false, message: "Invalid password" });
     }
-
+    const defaultPassword = student.middleName.toLowerCase() + "123";
+    const isDefaultPassword = await bcrypt.compare(defaultPassword, student.password);
     // Generate JWT properly
     const token = jwt.sign(
       { id: student._id, type: "student" },
@@ -39,7 +40,7 @@ router.post('/login',async(req,res)=>{
     // Remove password before sending response
     const { password: _, ...studentData } = student.toObject();
 
-    res.json({ success: true, token,userType:'student', student: studentData });
+    res.json({ success: true, token,userType:'student', student: studentData, isDefaultPassword,});
     console.log('Student logged in successfully');
 
   } catch (error) {
@@ -48,6 +49,32 @@ router.post('/login',async(req,res)=>{
   }
 })
 
+//the ff api is used for student change password
+router.post("/change-password", async (req, res) => {
+  try {
+    const { studentId, newPassword } = req.body;
+
+    if (!studentId || !newPassword) {
+      return res.status(400).json({ success: false, message: "Missing studentId or new password" });
+    }
+
+    const student = await Student.findOne({ studentId });
+    if (!student) {
+      return res.status(404).json({ success: false, message: "Student not found" });
+    }
+
+    // ✅ Hash the new password before saving
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    student.password = hashedPassword;
+
+    await student.save();
+
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
 router.post('/preferences/:id',async(req,res)=>{
   try {
     const studentId = req.params.id; // This is the custom studentId like "dtuR0094"
