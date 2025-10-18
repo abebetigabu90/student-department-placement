@@ -10,6 +10,8 @@ import Department from './src/models/Department.js'
 import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
+import Placement from './src/models/Placement.js'
+import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();
@@ -410,6 +412,11 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
         if (!row.G12) throw new Error('Missing entrance score (G12)');
         if (!row.Total70) throw new Error('Missing total score');
         if (!row.disability) throw new Error('Missing disability');
+        // Generate raw password
+        const rawPassword = (row.middlename || 'student') + '123';
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
         const student = {
           firstName: row.firstname,
@@ -423,7 +430,7 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
           gpa: row.CGPA,
           entranceScore: row.G12,
           totalScore: row.Total70,
-          password: (row.middlename || 'student') + '123'
+          password: hashedPassword
         };
 
         students.push(student);
@@ -554,6 +561,33 @@ app.get('/api/my/preferences/:studentCode', async (req, res) => {
     });
   }
 });
+//the ff api is used to show placement for any student
+app.get('/api/my/placement/:id',async(req,res)=>{
+  try {
+    const student = await Student.findOne({studentId:req.params.id})
+    const placement = await Placement.findOne({ student: student._id})
+      .populate('department', 'name')
+      .populate('student', 'firstName studentId')
+    if (!placement) {
+      console.log('not placed!')
+      return res.status(404).json({
+        success: false,
+        message: 'No placement found for this student'
+      });
+    }
+    res.json({
+      success: true,
+      placement: placement
+    });
+  } catch (error) {
+    console.error('Error fetching placement:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+})
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {
