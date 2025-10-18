@@ -51,7 +51,7 @@ router.post('/create-student', async (req, res) => {
       middleName,
       lastName,
       studentId,
-      password,
+      // password,
       stream,
       gender,
       region,
@@ -59,7 +59,7 @@ router.post('/create-student', async (req, res) => {
     } = req.body;
 
     // Simple validation
-    if (!firstName || !lastName || !studentId || !password || !stream || !gender || !region) {
+    if (!firstName || !lastName || !studentId || !stream || !gender || !region) {
       return res.status(400).json({
         success: false,
         message: 'All fields are required'
@@ -74,14 +74,18 @@ router.post('/create-student', async (req, res) => {
         message: 'Student with this ID already exists'
       });
     }
-
+    const rawPassword = (middleName) + '123';
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(rawPassword, 10);
+    
     // Create new student
     const newStudent = new Student({
       firstName: firstName.trim(),
       middleName: middleName ? middleName.trim() : '',
       lastName: lastName.trim(),
       studentId: studentId.trim(),
-      password: password,
+      password: hashedPassword,
       stream,
       gender,
       region,

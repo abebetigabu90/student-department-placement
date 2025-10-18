@@ -413,7 +413,7 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
         if (!row.Total70) throw new Error('Missing total score');
         if (!row.disability) throw new Error('Missing disability');
         // Generate raw password
-        const rawPassword = (row.middlename || 'student') + '123';
+        const rawPassword = (row.middlename) + '123';
 
         // Hash password
         const hashedPassword = await bcrypt.hash(rawPassword, 10);
