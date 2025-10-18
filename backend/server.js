@@ -11,6 +11,7 @@ import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
+import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();
@@ -411,6 +412,11 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
         if (!row.G12) throw new Error('Missing entrance score (G12)');
         if (!row.Total70) throw new Error('Missing total score');
         if (!row.disability) throw new Error('Missing disability');
+        // Generate raw password
+        const rawPassword = (row.middlename || 'student') + '123';
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
         const student = {
           firstName: row.firstname,
@@ -424,7 +430,7 @@ app.post('/api/admin/import/students', upload.single('excelFile'), async (req, r
           gpa: row.CGPA,
           entranceScore: row.G12,
           totalScore: row.Total70,
-          password: (row.middlename || 'student') + '123'
+          password: hashedPassword
         };
 
         students.push(student);

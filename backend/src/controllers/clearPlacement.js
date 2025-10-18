@@ -27,7 +27,10 @@ const clearPlacements = async () => {
                 { $set: { totalAssignedStudents: 0 } }
             ),
             // Delete all placements
-            Placement.deleteMany({})
+            Placement.deleteMany({}),
+            //Delete all preferences
+            // Preference.deleteMany({})
+            
         ]);
 
         console.log(chalk.green.bold('✅ All placements cleared!'));
