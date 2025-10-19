@@ -87,6 +87,9 @@ const ViewStudents = () => {
                     First Name
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
+                    Gender
+                  </th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
                     GPA/CGPA
                   </th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 uppercase tracking-wider">
@@ -111,6 +114,9 @@ const ViewStudents = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {student.firstName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {student.gender}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {student.gpa || (
