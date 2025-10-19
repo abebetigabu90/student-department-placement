@@ -165,7 +165,7 @@ export default function LoginPage() {
 
         localStorage.setItem("userData", JSON.stringify(userData));
 
-        alert("Login successful");
+        // alert("Login successful");
 
         // ✅ Redirect logic
         if (response.data.isDefaultPassword) {

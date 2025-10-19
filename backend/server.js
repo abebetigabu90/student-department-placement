@@ -632,5 +632,22 @@ const startServer = async () => {
   }
 };
 
+app.get('/api/admin/dashboard',async(req,res)=>{
+  try {
+    const totalStudents = await Student.countDocuments();
+    const totalDepartments = await Department.countDocuments();
+    const placedStudents = await Student.countDocuments({ Department: { $ne: null } });
+    const femaleStudents = await Student.countDocuments({gender: { $regex: /^F/i }})
+    res.json({
+      totalStudents,
+      totalDepartments,
+      placedStudents,
+      femaleStudents
+    });
+  } catch (error) {
+    console.error("Error fetching dashboard stats:", error);
+    res.status(500).json({ message: "Server Error" });
+  }
+})
 startServer();
 
