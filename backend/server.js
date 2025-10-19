@@ -14,6 +14,7 @@ import Student from './src/models/student.js'
 import Registrar from './src/models/Registrar.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
+import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();

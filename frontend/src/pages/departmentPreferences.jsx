@@ -196,7 +196,7 @@ const DepartmentPreferencePage = () => {
                   disabled={!departmentName}
                   className="px-3 py-2 bg-purple-500 text-white rounded disabled:bg-gray-400"
                 >
-                  View Ranking
+                  View Rank
                 </button>
               </div>
             ))}
