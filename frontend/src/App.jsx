@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { isAuthenticated } from './utils/auth';
-import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -32,6 +31,8 @@ import DepartmentAdmin from './pages/DepartmentAdmin'
 import StudentPreferences from './pages/studentPreferences'
 import MyPlacementPage from './pages/myPlacement'
 import ChangePasswordPage from './pages/studentChangePassword'
+import RegistrarDashboard from './pages/registrarDashboard'
+import RegistrarLayout from './layouts/registrarLayout'
 function App() {
   return (
 
@@ -56,18 +57,24 @@ function App() {
               <Route path="/student/change-password" element={<ChangePasswordPage />} />
           {/* </Route> */}
       </Route>
+      {/* Registrar Protected Routes */}
+      <Route element={<PrivateRoute allowedRoles={["registrar"]} />}>
+          <Route element={<RegistrarLayout />}>
+              <Route path="/registrar/dashboard" element={<RegistrarDashboard/>}/>
+              <Route path="/registrar/import/students" element={<ImportStudents/>}/>
+              <Route path="/registrar/create-students" element={<CreateStudent/>}/>
+              <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
+          </Route>
+      </Route>
       
       {/* Admin Protected Routes */}
       <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
           {/* <Route element={<Layout />}> */}
                 <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
-                <Route path="/admin/create-students" element={<CreateStudent/>}/>
-                <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
                 <Route path="/admin/runNaturalFistSemPlacement" element={<FirstSemPlacement/>}/>
                 <Route path="/admin/runSocialFistSemPlacement" element={<SocialFirstSem/>}/>
                 <Route path="/admin/view/preferences" element={<AdminPreferencesPage/>}/>
                 <Route path="/admin/view/placements" element={<ViewPlacements/>}/>
-                <Route path="/admin/import/students" element={<ImportStudents/>}/>
                 <Route path="/admin/preference/setting" element={<PreferenceSettingPage/>}/>
                 <Route path="/admin/clear/AllPlacements" element={<ClearPlacements/>}/>
                 <Route path="/admin/manage/departments" element={<DepartmentAdmin/>}/>
