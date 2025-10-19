@@ -1,17 +1,19 @@
+import dotenv from 'dotenv';
+import cors from 'cors';
+import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
+import connectDB from './src/config/db.js';
 import departmentRoutes from './src/routes/departmentRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import studentRoutes from './src/routes/students.js';
 import placementRouter from './src/routes/placement.js';
 import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import connectDB from './src/config/db.js';
 import Department from './src/models/Department.js'
 import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
+import Registrar from './src/models/Registrar.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
-import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();
@@ -22,7 +24,36 @@ app.use('/api/student', studentRoutes);
 //app.use('/api/admin/GetDepartments', departmentRoutes);
 app.use('/api/admin/placement', placementRouter);
 app.use('/api/admin/setting',adminRoutes);
-
+//the ff api is used to check registrar login
+app.post('/api/registrar/login',async(req,res)=>{
+      try {
+      const { email, password } = req.body;
+  
+      const registrar = await Registrar.findOne({ email });
+      if (!registrar) {
+        return res.status(404).json({ success: false, message: "Registrar not found" });
+      }
+  
+      const isMatch = await bcrypt.compare(password, registrar.password);
+      if (!isMatch) {
+        return res.status(401).json({ success: false, message: "Invalid password" });
+      }
+  
+      const token = jwt.sign(
+        { id: registrar._id, type: "registrar" },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRESIN }
+      );
+  
+      const { password: _, ...registrarData } = registrar.toObject();
+      res.json({ success: true, token, userType: 'registrar', registrar: registrarData });
+      console.log('Registrar logged in successfully');
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: "Server error" });
+    }
+})
 app.post('/logout',async(req,res)=>{
   try{res.json({message:'loged out successfully!'})}
   catch(e){
