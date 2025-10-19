@@ -33,6 +33,9 @@ import MyPlacementPage from './pages/myPlacement'
 import ChangePasswordPage from './pages/studentChangePassword'
 import RegistrarDashboard from './pages/registrarDashboard'
 import RegistrarLayout from './layouts/registrarLayout'
+import StudentLayout from './layouts/studentLayout'
+import AdminLayout from './layouts/adminLayout'
+import PublicLayout from './layouts/publicLayout'
 function App() {
   return (
 
@@ -41,21 +44,22 @@ function App() {
     <Router>
         <Routes>
       {/* public routes */}
-      <Route path="/login" element={<Login/>}/>
-      <Route path="/logout" element={<Logout/>}/>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/unauthorized" element={<Unauthorized />} />
-      
+      <Route element={<PublicLayout />}>
+          <Route path="/login" element={<Login/>}/>
+          <Route path="/logout" element={<Logout/>}/>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/unauthorized" element={<Unauthorized />} />
+      </Route>
       {/* Student Protected Routes */}
       <Route element={<PrivateRoute allowedRoles={["student"]} />}>
-          {/* <Route element={<StudentLayout />}> */}
+          <Route element={<StudentLayout />}>
               <Route path="/student/dashboard" element={<StudentDashboard/>}/>
               <Route path="/student/departmentPreferences" element={<DepartmentPreferencePage/>}/>
               <Route path="/ranking/:departmentName" element={<RankingPage />} />
               <Route path="/my/preferences" element={<StudentPreferences />} />
               <Route path="/my/placement" element={<MyPlacementPage />} />
               <Route path="/student/change-password" element={<ChangePasswordPage />} />
-          {/* </Route> */}
+          </Route>
       </Route>
       {/* Registrar Protected Routes */}
       <Route element={<PrivateRoute allowedRoles={["registrar"]} />}>
@@ -69,7 +73,7 @@ function App() {
       
       {/* Admin Protected Routes */}
       <Route element={<PrivateRoute allowedRoles={["admin"]} />}>
-          {/* <Route element={<Layout />}> */}
+          <Route element={<AdminLayout />}>
                 <Route path="/admin/dashboard" element={<AdminDashboard/>}/>
                 <Route path="/admin/runNaturalFistSemPlacement" element={<FirstSemPlacement/>}/>
                 <Route path="/admin/runSocialFistSemPlacement" element={<SocialFirstSem/>}/>
@@ -78,15 +82,8 @@ function App() {
                 <Route path="/admin/preference/setting" element={<PreferenceSettingPage/>}/>
                 <Route path="/admin/clear/AllPlacements" element={<ClearPlacements/>}/>
                 <Route path="/admin/manage/departments" element={<DepartmentAdmin/>}/>
-                {/* <Route path="/admin/dashboard" element={<Dashboard />} /> */}
-                {/* <Route path="/students" element={<Students />} /> */}
-                {/* <Route path="/students/add" element={<AddStudent />} /> */}
-                {/* <Route path="/departments" element={<Departments />} /> */}
-                {/* <Route path="/upload" element={<Upload />} /> */}
-                {/* <Route path="/placement" element={<Placement />} /> */}
-                {/* <Route path="/results" element={<Results />} />  */}
                 {/* AdminReportsPage */}
-          {/* </Route> */}
+          </Route>
       </Route>
     </Routes>
     </Router>
