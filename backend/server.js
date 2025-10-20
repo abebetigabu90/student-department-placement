@@ -14,7 +14,6 @@ import Student from './src/models/student.js'
 import Registrar from './src/models/Registrar.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
-import bcrypt from 'bcryptjs';
 dotenv.config();
 
 const app = express();
@@ -140,6 +139,9 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
                 return res.status(404).json({ message: 'No departments recorded in the department document!' });
                 }
                 return res.status(200).json(departments);
+          }
+          if(student.Department.PrefTypeCategory === 'Unique' || student.Department.PrefTimeCategory === 'SecSemFirst') {
+             return res.json({message:`No More! Preference You Have Been Placed in ${student.Department.name}`})
           }
           
     }
@@ -620,19 +622,7 @@ app.get('/api/my/placement/:id',async(req,res)=>{
     });
   }
 })
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
-  try {
-    await connectDB();
-    app.listen(PORT, () => {
-      console.log(`✅ Server running on port ${PORT}`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-  }
-};
-
+//the ff api is for admind dashboard
 app.get('/api/admin/dashboard',async(req,res)=>{
   try {
     const totalStudents = await Student.countDocuments();
@@ -650,5 +640,40 @@ app.get('/api/admin/dashboard',async(req,res)=>{
     res.status(500).json({ message: "Server Error" });
   }
 })
+//the ff api is used for view students
+app.get('/api/admin/view/students',async(req,res)=>{
+      try {
+        const students = await Student.find().select('-password');
+        res.json(students);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching students', error: error.message });
+    }
+})
+//the ff api used for student account update
+app.patch('/api/admin/updateStudentAccount/:id', async (req, res) => {
+    try {
+        const { AccountStatus } = req.body;
+        const student = await Student.findByIdAndUpdate(
+            req.params.id,
+            { AccountStatus },
+            { new: true }
+        ).select('-password');
+        res.json(student);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating student', error: error.message });
+    }
+});
+const PORT = process.env.PORT || 5000;
+
+const startServer = async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+  }
+};
 startServer();
 

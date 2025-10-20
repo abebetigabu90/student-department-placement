@@ -80,6 +80,10 @@ disability: {
   type: Boolean,
   default:false
   },
+  AccountStatus: {
+  type: Boolean,
+  default:true
+  },
   // isPreEngineering: {
   // type: Boolean,
   // default:false
