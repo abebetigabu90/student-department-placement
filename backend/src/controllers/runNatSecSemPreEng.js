@@ -6,30 +6,18 @@ import Department from '../models/Department.js';
 import Preference from '../models/preferences.js'
 import Placement from '../models/Placement.js'
 import chalk from 'chalk'
-export const GenplacementForFirstSemNatural = async () => {
+export const GenplacementForPreEng = async () => {
     try {
         console.log(chalk.yellow.bold("🔍 Starting placement query..."));
-        const naturalFirstSem = await Student.find({
-            stream: { $regex: /^N/i }, // ^N means starts with N, /i makes it case insensitive,
-            isAssigned: false,
-            totalScore:{ $exists: true }
-        });
-        if (naturalFirstSem.length === 0) {
-            console.log(chalk.blue.bold('❌ No students found. Checking individual conditions...'));
-            const streamCheck = await Student.countDocuments({stream: { $regex: /^N/i} });
-            const deptCheck = await Student.countDocuments({isAssigned: false});
-            const scoreCheck = await Student.countDocuments({ totalScore: { $exists: true } });
-            
-            console.log(chalk.yellow(`🔍 Condition breakdown:`));
-            console.log(chalk.yellow(`   - Stream 'Natural Science': ${streamCheck} students`));
-            console.log(chalk.yellow(`   - No Department: ${deptCheck} students`));
-            console.log(chalk.yellow(`   - Has totalScore: ${scoreCheck} students`));
-            
+        const PreEngDept = await Department.findOne({name:'PreEngineering'})
+        const PreEngStudents = await Student.find({Department:PreEngDept._id});
+        if (PreEngStudents.length === 0) {
+            console.log(chalk.blue.bold('❌ No students found'));
             return { message: 'No students to place' };
         }
 
         console.log(chalk.green.bold("Sorting students by score in descending order and assigning departments"));
-        const sortedStudents = naturalFirstSem.sort((a, b) => b.totalScore - a.totalScore);
+        const sortedStudents = PreEngStudents.sort((a, b) => b.totalScore - a.totalScore);
 
         const placementResults = [];
         let placedCount = 0;
@@ -47,19 +35,27 @@ export const GenplacementForFirstSemNatural = async () => {
                 console.log(chalk.yellow(`Department not found for student ${stu.studentId}`));
                 continue;
             }
-            if (currentDept.PrefTimeCategory !== 'FirstSem') {
-                console.log(chalk.yellow(`${currentDept.name} is not first semister department`));
-                continue;
-            }
+
             // Check capacity with strict inequality
             
             try {
+
+
+
                 // Atomically increment totalAssignedStudents only if department has available capacity
+                // const updatedDept = await Department.findOneAndUpdate(
+                //     { _id: currentDept._id, totalAssignedStudents: { $lt: currentDept.capacity } },
+                //     { $inc: { totalAssignedStudents: 1 } },
+                //     { new: true } // returns the updated document
+                // );
                 const updatedDept = await Department.findOneAndUpdate(
-                    { _id: currentDept._id, totalAssignedStudents: { $lt: currentDept.capacity } },
+                    { 
+                            _id: currentDept._id, 
+                            $expr: { $lt: ["$totalAssignedStudents", "$capacity"] } 
+                    },
                     { $inc: { totalAssignedStudents: 1 } },
-                    { new: true } // returns the updated document
-                );
+                    { new: true }
+                  );
 
                 if (!updatedDept) {
                     // Department is already full, cannot assign this student
@@ -75,14 +71,15 @@ export const GenplacementForFirstSemNatural = async () => {
                 await Student.findByIdAndUpdate(stu._id, studentUpdate);
 
                 console.log(`Student ${stu._id} assigned to ${updatedDept._id} successfully.`);
+                //update the old placement since already exists
+                const placement = await Placement.updateOne({student: stu._id},{department: currentDept._id,priority: 1})
                 // Create placement
-                const placement = new Placement({
-                    student: stu._id,
-                    department: currentDept._id,
-                    priority: 1
-                });
-                
-                await placement.save();
+                // const placement = new Placement({
+                //     student: stu._id,
+                //     department: currentDept._id,
+                //     priority: 1
+                // });
+                // await placement.save();
                 placementResults.push(placement);
                 placedCount++;
                 console.log(chalk.green(`Placed student ${stu.studentId} ${stu.firstName} in ${currentDept.name}`)); 
@@ -103,12 +100,12 @@ export const GenplacementForFirstSemNatural = async () => {
     }
 };
 //the ff function is for female quota rebalancing 
-export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
+export const femaleQuota_AdjustmentForPreEng = async () => {
     try {
-        console.log('🎯 Starting female quota adjustment for Natural Science departments...');
-        
+        console.log('🎯 Starting female quota adjustment for PreEngineering departments...');
+        const PreEngDept = await Department.findOne({name:'PreEngineering'}) //this code is usefull for later not now
         const departments = await Department.find({
-            PrefTimeCategory:'FirstSem',stream:'natural'
+            PrefTimeCategory:'SecSemFirst',PrefTypeCategory:'PreEngineering'
         });
 
         let totalProcessed = 0;
@@ -154,8 +151,9 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
 
                 // Find available female students who want this department
                 const femaleStudents = await Student.find({ 
-                    gender: { $regex: /^F/i }, 
-                    isAssigned: false 
+                    gender: { $regex: /^F/i },
+                    Department:PreEngDept._id
+
                 });
                 const femaleStudentIds = femaleStudents.map(student => student._id);
                 
@@ -200,21 +198,31 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
                         const currentMaleName = `${sortedMales[i].firstName} ${sortedMales[i].middleName}`;
 
                         console.log(chalk.blue(`🔄 Replacing male ${currentMaleName} with female ${currentFemaleName}`));
+                        await Promise.all([
+                            Student.findByIdAndUpdate(currentFemaleId, { Department: dept._id }),
+                            Student.findByIdAndUpdate(currentMaleId, { Department: PreEngDept._id }),
+                            Placement.updateOne({ student: currentFemaleId }, { department: dept._id, priority: 1 }),
+                            Placement.updateOne({ student: currentMaleId }, { department: PreEngDept._id })
+                        ]);
 
-                        // 1. First assign female to department
-                        await Student.findByIdAndUpdate(currentFemaleId,{Department: dept._id,isAssigned: true});
+                    //     // 1. First assign female to department
+                    //     await Student.findByIdAndUpdate(currentFemaleId,{Department: dept._id});
                         
-                        // 2. Create female placement record
-                        const placement = new Placement({
-                            student: currentFemaleId,
-                            department: dept._id,
-                            priority: 1
-                        });
-                        await placement.save();
-                        // 3. Then remove male from department (only if female assignment succeeded)
-                        await Student.findByIdAndUpdate(currentMaleId,{Department: null, isAssigned: false});     
-                        // 4. Delete male placement record
-                        await Placement.deleteOne({ student: currentMaleId });
+                    //    //update the old placement since already exists
+                    //    const placement = await Placement.updateOne({student: currentFemaleId},{department: dept._id,priority: 1})
+                    //     // 2. Create female placement record
+                    //     // const placement = new Placement({
+                    //     //     student: currentFemaleId,
+                    //     //     department: dept._id,
+                    //     //     priority: 1
+                    //     // });
+                    //     // await placement.save();
+                    //     // 3. Then remove male from department (only if female assignment succeeded)
+                    //     await Student.findByIdAndUpdate(currentMaleId,{Department: PreEngDept._id});  
+                    //    //update the old placement since already exists
+                    //     await Placement.updateOne({student: currentMaleId},{department: PreEngDept._id})
+                    //     // // 4. Delete male placement record
+                    //     // await Placement.deleteOne({ student: currentMaleId });
                         
                         replacementSuccess = true;
                         replacementsMade++;
@@ -225,11 +233,9 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
                         // Rollback only if female was assigned but male removal failed
                         if (!replacementSuccess) {
                             try {
-                                await Student.findByIdAndUpdate(currentFemaleId, {
-                                    Department: null,
-                                    isAssigned: false
-                                });
-                                await Placement.deleteOne({ student: currentFemaleId });
+                                await Student.findByIdAndUpdate(currentFemaleId, {Department: PreEngDept._id});
+                                await Placement.updateOne({student: currentFemaleId},{department: PreEngDept._id})
+                                // await Placement.deleteOne({ student: currentFemaleId });
                                 console.log(chalk.yellow(`🔄 Rolled back female assignment for ${currentFemaleName}`));
                             } catch (rollbackError) {
                                 console.error(chalk.red(`❌ Failed to rollback female assignment for ${currentFemaleName}:`), rollbackError);
@@ -268,15 +274,17 @@ export const femaleQuota_AdjustmentForNaturalSem1 = async () => {
     }
 };
 // Placement for Natural Science students who didn't get their first choice
-export const placementForUnplacedFirstSemNatural = async () => {
+export const placementForUnplacedPreEng = async () => {
     try {
         console.log("Starting placement for unplaced Natural Science students...");
         // Find students who need placement
-        const unplacedStudents = await Student.find({
-            stream: { $regex: /^N/i },
-            totalScore: { $exists: true },
-            isAssigned: false
-        });
+        const PreEngDept = await Department.findOne({name:'PreEngineering'})
+        const unplacedStudents = await Student.find({Department:PreEngDept._id});
+        // const unplacedStudents = await Student.find({
+        //     stream: { $regex: /^N/i },
+        //     totalScore: { $exists: true },
+        //     isAssigned: false
+        // });
 
         if (unplacedStudents.length === 0) {
             console.log('No students need placement.');
@@ -305,41 +313,44 @@ export const placementForUnplacedFirstSemNatural = async () => {
             // Try each preference in order
             for (const preference of preferences) {
                 const department = await Department.findById(preference.department);
-                if (department.PrefTimeCategory !== 'FirstSem') {
-                    console.log(chalk.yellow(`${currentDept.name} is not first semister department`));
-                    continue;
-                }
+                
                 if (!department) {
                     console.log(`Department not found for preference`);
                     continue;
                 }
                 // Check if department has space
+                //     const updatedDept = await Department.findOneAndUpdate(
+                //     { _id: department._id, totalAssignedStudents: { $lt: department.capacity } },
+                //     { $inc: { totalAssignedStudents: 1 } },
+                //     { new: true } // returns the updated document
+                // );
                     const updatedDept = await Department.findOneAndUpdate(
-                    { _id: department._id, totalAssignedStudents: { $lt: department.capacity } },
-                    { $inc: { totalAssignedStudents: 1 } },
-                    { new: true } // returns the updated document
-                );
-
+                        { 
+                            _id: department._id, 
+                            $expr: { $lt: ["$totalAssignedStudents", "$capacity"] } 
+                        },
+                        { $inc: { totalAssignedStudents: 1 } },
+                        { new: true }
+                    );
                 if (!updatedDept) {
                     // Department is already full, cannot assign this student
                     console.log(`Department ${department._id} is full. Student ${student._id} not assigned.`);
                     continue;
                 }
                 // Prepare fields to update on the student
-                const studentUpdate = {
-                    Department: updatedDept._id, // use correct field name (lowercase is typical)
-                    isAssigned: true
-                };
+                const studentUpdate = {Department: updatedDept._id,};
                 await Student.findByIdAndUpdate(student._id, studentUpdate);
                 console.log(`✅ Placed ${student.firstName} in ${department.name} (Choice #${preference.priority})`);
                 placedCount++;
                 studentPlaced = true;
-                const placement = new Placement({
-                 student: student._id,
-                 department: updatedDept._id,
-                 priority: preference.priority
-                })
-                await placement.save();
+                //update the old placement since already exists
+                const placement = await Placement.updateOne({student: student._id},{department: updatedDept._id,priority: preference.priority})
+                // const placement = new Placement({
+                //  student: student._id,
+                //  department: updatedDept._id,
+                //  priority: preference.priority
+                // })
+                // await placement.save();
                 break; // Stop looking for other preferences
             }
 
