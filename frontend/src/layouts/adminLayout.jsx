@@ -20,13 +20,18 @@ export default function AdminLayout() {
     },
     { 
       path: "/admin/runNaturalFistSemPlacement", 
-      label: "Natural Science Placement", 
+      label: "1st Semister Natural Science Placement", 
       icon: "🔬"
     },
     { 
       path: "/admin/runSocialFistSemPlacement", 
-      label: "Social Science Placement", 
+      label: "1st Semister Social Science Placement", 
       icon: "🌍"
+    },
+    { 
+      path: "/admin/runPreEngineeringPlacement", 
+      label: "2nd Semister Pre Engineering Placement", 
+      icon: "🔬"
     },
     { 
       path: "/admin/view/preferences", 

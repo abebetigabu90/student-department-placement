@@ -47,6 +47,10 @@ export const GenplacementForFirstSemSocial = async () => {
                 console.log(chalk.yellow(`Department not found for student ${stu.studentId}`));
                 continue;
             }
+            if (currentDept.PrefTimeCategory !== 'FirstSem') {
+                console.log(chalk.yellow(`${currentDept.name} is not first semister department`));
+                continue;
+            }
 
             // Check capacity with strict inequality
             
@@ -305,6 +309,10 @@ export const placementForUnplacedFirstSemSocial = async () => {
                 
                 if (!department) {
                     console.log(`Department not found for preference`);
+                    continue;
+                }
+                if (department.PrefTimeCategory !== 'FirstSem') {
+                    console.log(chalk.yellow(`${currentDept.name} is not first semister department`));
                     continue;
                 }
                 // Check if department has space
