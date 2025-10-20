@@ -32,6 +32,7 @@ import StudentPreferences from './pages/studentPreferences'
 import MyPlacementPage from './pages/myPlacement'
 import ChangePasswordPage from './pages/studentChangePassword'
 import RegistrarDashboard from './pages/registrarDashboard'
+import ManageStudents from './pages/manageStudents'
 import RegistrarLayout from './layouts/registrarLayout'
 import StudentLayout from './layouts/studentLayout'
 import AdminLayout from './layouts/adminLayout'
@@ -82,6 +83,7 @@ function App() {
                 <Route path="/admin/preference/setting" element={<PreferenceSettingPage/>}/>
                 <Route path="/admin/clear/AllPlacements" element={<ClearPlacements/>}/>
                 <Route path="/admin/manage/departments" element={<DepartmentAdmin/>}/>
+                <Route path="/admin/manage/students" element={<ManageStudents/>}/>
                 {/* AdminReportsPage */}
           </Route>
       </Route>
