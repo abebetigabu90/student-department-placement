@@ -29,12 +29,12 @@ const clearPlacements = async () => {
             // Delete all placements
             Placement.deleteMany({}),
             //Delete all preferences
-            // Preference.deleteMany({})
+            Preference.deleteMany({})
             
         ]);
 
-        console.log(chalk.green.bold('✅ All placements cleared!'));
-        return { success: true, message: 'All placements cleared' };
+        console.log(chalk.green.bold('✅ All placements and Preferences cleared!'));
+        return { success: true, message: 'All placements and Preferences cleared' };
 
     } catch (error) {
         console.error(chalk.red.bold('❌ Clear error:'), error);

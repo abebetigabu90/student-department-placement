@@ -4,6 +4,7 @@ import {GenplacementForFirstSemNatural,femaleQuota_AdjustmentForNaturalSem1,plac
 import {GenplacementForFirstSemSocial,femaleQuota_AdjustmentForSocialSem1,placementForUnplacedFirstSemSocial} from '../controllers/runFirstSemSocialPlacement.js'
 import {GenplacementForPreEng,femaleQuota_AdjustmentForPreEng,placementForUnplacedPreEng} from '../controllers/runNatSecSemPreEng.js'
 import {GenplacementForOtherNat,femaleQuota_AdjustmentForOtherNat,placementForUnplacedOtherNat} from '../controllers/runSecSemOtherNatural.js'
+import {GenplacementForOtherSocial,femaleQuota_AdjustmentForOtherSocial,placementForUnplacedOtherSocial} from '../controllers/runSecSemOtherSocial.js'
 import clearPlacements from '../controllers/clearPlacement.js'
 const Router = express.Router();
 
@@ -158,6 +159,49 @@ Router.post('/runOtherNaturalPlacement', async (req, res) => {
     res.json({
       success: true,
       message: 'placement operations of Other Natural Category Departments Placement completed successfully',
+      
+      // Match exact return structures from your functions
+      placementResult: placementResult, // Has: message, placements
+      quotaResult: quotaResult,         // Has: success, processed, skipped, errors, message  
+      unplacedResult: unplacedResult,   // Has: success, placed, total, message
+      
+      // Add calculated totals for easy display
+      totals: {
+        totalInitialPlacements: placementResult.placements ? placementResult.placements.length : 0,
+        totalQuotaReplacements: quotaResult.processed || 0,
+        totalUnplacedPlaced: unplacedResult.placed || 0,
+        overallStudentsPlaced: (placementResult.placements ? placementResult.placements.length : 0) + (unplacedResult.placed || 0)
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Operation failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Placement process failed', 
+      details: error.message
+    });
+  }
+});
+//the ff is used to run placement for othe social second semister students
+Router.post('/runOtherSocialPlacement', async (req, res) => {
+  try {
+    console.log('🚀 Starting placement generation...');
+    
+    // Run all three functions
+    const placementResult = await GenplacementForOtherSocial();
+    console.log('✅ Placement generation completed');
+    
+    const quotaResult = await femaleQuota_AdjustmentForOtherSocial();
+    console.log('✅ Female quota adjustment completed');
+    
+    const unplacedResult = await placementForUnplacedOtherSocial();
+    console.log('✅ Unplaced students placement completed');
+    
+    // Send response matching EXACT return structures
+    res.json({
+      success: true,
+      message: 'placement operations of Other Social Category Departments Placement completed successfully',
       
       // Match exact return structures from your functions
       placementResult: placementResult, // Has: message, placements
