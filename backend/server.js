@@ -649,19 +649,28 @@ app.get('/api/admin/view/students',async(req,res)=>{
     }
 })
 //the ff api used for student account update
-app.patch('/api/admin/updateStudentAccount/:id', async (req, res) => {
-    try {
-        const { AccountStatus } = req.body;
-        const student = await Student.findByIdAndUpdate(
-            req.params.id,
-            { AccountStatus },
-            { new: true }
-        ).select('-password');
-        res.json(student);
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating student', error: error.message });
-    }
-});
+// app.patch('/api/admin/updateStudentAccount/:id', async (req, res) => {
+//     try {
+//         const { AccountStatus } = req.body;
+//         const student = await Student.findByIdAndUpdate(
+//             req.params.id,
+//             { AccountStatus },
+//             { new: true }
+//         ).select('-password');
+//         res.json(student);
+//     } catch (error) {
+//         res.status(500).json({ message: 'Error updating student', error: error.message });
+//     }
+// });
+//the ff api of registrar used to delete student 
+app.delete('/api/registrar/delete/student/:id',async(req,res)=>{
+  try {
+    await Student.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Student deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Error deleting student' });
+  }
+})
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

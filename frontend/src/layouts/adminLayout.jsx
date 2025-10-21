@@ -39,6 +39,11 @@ export default function AdminLayout() {
       icon: "🔬"
     },
     { 
+      path: "/admin/runOtherSocialPlacement", 
+      label: "2nd Semister Other Social Placement", 
+      icon: "🌍"
+    },
+    { 
       path: "/admin/view/preferences", 
       label: "View Preferences", 
       icon: "📋"
