@@ -381,15 +381,14 @@ app.get('/api/admin/view/stuPreferences', async (req, res) => {
 
 
 //the ff api used to show the placements of students for admin
-app.get('/api/admin/viewPlacements',async(req,res)=>{
+app.get('/api/admin/viewAllPlacements',async(req,res)=>{
   try {
     const placedStudents = await Student.find({ 
       Department: { $ne: null } 
     })
     .populate('Department', 'name deptID')
-    .select('studentId firstName middleName gender gpa entranceScore totalScore Department')
+    // .select('studentId firstName middleName gender gpa entranceScore totalScore Department')
     .sort({ totalScore: -1 });
-
     res.json(placedStudents);
   } catch (error) {
     console.error('Error fetching placed students:', error);
