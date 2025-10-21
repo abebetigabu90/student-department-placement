@@ -3,6 +3,7 @@ import adminAuth from '../middleware/adminAuth.js';
 import {GenplacementForFirstSemNatural,femaleQuota_AdjustmentForNaturalSem1,placementForUnplacedFirstSemNatural} from '../controllers/runFirstSemNatPlacement.js'
 import {GenplacementForFirstSemSocial,femaleQuota_AdjustmentForSocialSem1,placementForUnplacedFirstSemSocial} from '../controllers/runFirstSemSocialPlacement.js'
 import {GenplacementForPreEng,femaleQuota_AdjustmentForPreEng,placementForUnplacedPreEng} from '../controllers/runNatSecSemPreEng.js'
+import {GenplacementForOtherNat,femaleQuota_AdjustmentForOtherNat,placementForUnplacedOtherNat} from '../controllers/runSecSemOtherNatural.js'
 import clearPlacements from '../controllers/clearPlacement.js'
 const Router = express.Router();
 
@@ -112,7 +113,7 @@ Router.post('/runPreEngineeringPlacement', async (req, res) => {
     // Send response matching EXACT return structures
     res.json({
       success: true,
-      message: 'placement operations of Engineerings field Placement completed successfully',
+      message: 'placement operations of PreEngineering Category Departments Placement completed successfully',
       
       // Match exact return structures from your functions
       placementResult: placementResult, // Has: message, placements
@@ -138,6 +139,49 @@ Router.post('/runPreEngineeringPlacement', async (req, res) => {
   }
 });
 
+//the ff is used to run placement for other natural second semister students
+Router.post('/runOtherNaturalPlacement', async (req, res) => {
+  try {
+    console.log('🚀 Starting placement generation...');
+    
+    // Run all three functions
+    const placementResult = await GenplacementForOtherNat();
+    console.log('✅ Placement generation completed');
+    
+    const quotaResult = await femaleQuota_AdjustmentForOtherNat();
+    console.log('✅ Female quota adjustment completed');
+    
+    const unplacedResult = await placementForUnplacedOtherNat();
+    console.log('✅ Unplaced students placement completed');
+    
+    // Send response matching EXACT return structures
+    res.json({
+      success: true,
+      message: 'placement operations of Other Natural Category Departments Placement completed successfully',
+      
+      // Match exact return structures from your functions
+      placementResult: placementResult, // Has: message, placements
+      quotaResult: quotaResult,         // Has: success, processed, skipped, errors, message  
+      unplacedResult: unplacedResult,   // Has: success, placed, total, message
+      
+      // Add calculated totals for easy display
+      totals: {
+        totalInitialPlacements: placementResult.placements ? placementResult.placements.length : 0,
+        totalQuotaReplacements: quotaResult.processed || 0,
+        totalUnplacedPlaced: unplacedResult.placed || 0,
+        overallStudentsPlaced: (placementResult.placements ? placementResult.placements.length : 0) + (unplacedResult.placed || 0)
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Operation failed:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Placement process failed', 
+      details: error.message
+    });
+  }
+});
 // Add this to your Express routes
 Router.delete('/ClearPlacements', async (req, res) => {
     const result = await clearPlacements();
