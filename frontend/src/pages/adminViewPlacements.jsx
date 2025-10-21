@@ -10,7 +10,7 @@ const ViewPlacements = () => {
   const fetchPlacedStudents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/admin/viewPlacements');
+      const response = await axios.get('http://localhost:5000/api/admin/viewAllPlacements');
       setStudents(response.data);
     } catch (error) {
       console.error('Error fetching placed students:', error);
@@ -158,6 +158,7 @@ const ViewPlacements = () => {
                 <th className="px-4 py-2 text-left">Student ID</th>
                 <th className="px-4 py-2 text-left">Name</th>
                 <th className="px-4 py-2 text-left">Gender</th>
+                <th className="px-4 py-2 text-left">Stream</th>
                 <th className="px-4 py-2 text-left">GPA</th>
                 <th className="px-4 py-2 text-left">Grade 12</th>
                 <th className="px-4 py-2 text-left">Total Score</th>
@@ -182,6 +183,7 @@ const ViewPlacements = () => {
                     {/* Simple text for print */}
                     <span className="print-only hidden print:inline">{student.gender}</span>
                   </td>
+                  <td className="px-4 py-2">{student.stream}</td>
                   <td className="px-4 py-2">{student.gpa}</td>
                   <td className="px-4 py-2">{student.entranceScore}</td>
                   <td className="px-4 py-2 font-medium">{student.totalScore}</td>

@@ -12,7 +12,8 @@ export const GenplacementForFirstSemSocial = async () => {
         const socialFirstSem = await Student.find({
             stream: { $regex: /^S/i }, // ^S means starts with S, /i makes it case insensitive,
             isAssigned: false,
-            totalScore:{ $exists: true }
+            totalScore: { $ne: null }
+            //totalScore:{ $exists: true }
         });
         if (socialFirstSem.length === 0) {
             console.log(chalk.blue.bold('❌ No students found. Checking individual conditions...'));
@@ -275,7 +276,8 @@ export const placementForUnplacedFirstSemSocial = async () => {
         // Find students who need placement
         const unplacedStudents = await Student.find({
             stream: { $regex: /^S/i },
-            totalScore: { $exists: true },
+            totalScore: { $ne: null },
+            // totalScore: { $exists: true },
             isAssigned: false
         });
 
