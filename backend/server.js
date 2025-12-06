@@ -89,6 +89,15 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
     
     let departments;
     const preferenceSetting = await PreferenceSetting.findOne()
+    // if(student.Department.PrefTypeCategory === 'Unique' || student.Department.PrefTimeCategory === 'SecSemFirst')
+    // if(student.Department.isFinalPref) {
+    //          return res.json({message:`No More! Preference You Have Been Placed in ${student.Department.name}`})
+    //     }
+    if (student?.Department?.isFinalPref) {
+    return res.json({
+        message: `No More! Preference You Have Been Placed in ${student.Department.name}`
+    });
+    }
     if(preferenceSetting.isFirstSemPrefEnabled === true){
           if (student.stream.toLowerCase().startsWith('n') && student.isAssigned === false) {
             // Natural Science stream
@@ -140,9 +149,7 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
                 }
                 return res.status(200).json(departments);
           }
-          if(student.Department.PrefTypeCategory === 'Unique' || student.Department.PrefTimeCategory === 'SecSemFirst') {
-             return res.json({message:`No More! Preference You Have Been Placed in ${student.Department.name}`})
-          }
+
           
     }
      else{
