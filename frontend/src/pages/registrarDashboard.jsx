@@ -48,7 +48,7 @@ export default function RegistrarDashboard() {
             to="/admin/viewStudents"
             className="block bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
           >
-            View Students Result
+            View Students
           </Link>
         </div>
       </div>

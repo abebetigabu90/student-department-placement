@@ -252,82 +252,138 @@ app.post('/api/students/:id/grades', async (req, res) => {
 
 
 // Update student grades
-app.put('/api/students/:id/updateGrades', async (req, res) => {
-  try {
-    const { gpaOrcgpa, entranceScore } = req.body;
+// app.put('/api/students/:id/updateGrades', async (req, res) => {
+//   try {
+//     const { gpaOrcgpa, entranceScore } = req.body;
     
-    // Validate input
-    if (!gpaOrcgpa || !entranceScore) {
-      return res.status(400).json({ 
-        message: 'GPA/CGPA and entrance score are required' 
-      });
-    }
+//     // Validate input
+//     if (!gpaOrcgpa || !entranceScore) {
+//       return res.status(400).json({ 
+//         message: 'GPA/CGPA and entrance score are required' 
+//       });
+//     }
 
-    if (gpaOrcgpa < 0 || gpaOrcgpa > 4.0) {
-      return res.status(400).json({ 
-        message: 'GPA/CGPA must be between 0.0 and 4.0' 
-      });
-    }
+//     if (gpaOrcgpa < 0 || gpaOrcgpa > 4.0) {
+//       return res.status(400).json({ 
+//         message: 'GPA/CGPA must be between 0.0 and 4.0' 
+//       });
+//     }
 
-    if (entranceScore < 0 || entranceScore > 600) {
-      return res.status(400).json({ 
-        message: 'Entrance score must be between 0 and 700' 
-      });
-    }
+//     if (entranceScore < 0 || entranceScore > 600) {
+//       return res.status(400).json({ 
+//         message: 'Entrance score must be between 0 and 700' 
+//       });
+//     }
 
+//     const student = await Student.findById(req.params.id);
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found' });
+//     }
+//         function calculateTotalScore(gpaOrcgpa, entranceScore) {
+//       // Convert GPA/CGPA to percentage (assuming 4.0 scale)
+//       const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+      
+//       // Normalize entrance score to percentage (out of 600)
+//       const entrancePercentage = (entranceScore / 600) * 100;
+      
+//       // Calculate weighted total (adjust weights as needed)
+//       // Example: 50% from GPA/CGPA and 50% from entrance exam
+//       let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+//       if(student.gender==='Female'){
+//         totalScore +=5
+//       }
+//       const emergingRegions = [
+//         "Afar",
+//         "Benishangul-Gumuz",
+//         "Gambela",
+//         "Somali"
+//       ];
+
+//       // check if student's region is exactly one of them
+//       if (emergingRegions.includes(student.region)) {
+//         totalScore += 5;
+//       }
+//       if(student.disability!=='none'){
+//        totalScore +=10 
+//       }
+//       return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
+//     }
+
+//     // Calculate total score
+//     const totalScore = calculateTotalScore(gpaOrcgpa, entranceScore);
+
+//     // Update student grades
+//     student.gpa = gpaOrcgpa;
+//     student.entranceScore = entranceScore;
+//     student.totalScore = totalScore;
+//     const updatedStudent = await student.save();
+    
+//     res.json({
+//       message: 'Grades updated successfully',
+//       student: updatedStudent
+//     });
+//   } catch (error) {
+//     console.error('Error updating grades:', error);
+//     res.status(400).json({ 
+//       message: 'Failed to update grades',
+//       error: error.message 
+//     });
+//   }
+// });
+app.patch('/api/students/:id', async (req, res) => {
+  try {
+    const updates = req.body;  // Only the fields sent from frontend
     const student = await Student.findById(req.params.id);
+
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
-        function calculateTotalScore(gpaOrcgpa, entranceScore) {
-      // Convert GPA/CGPA to percentage (assuming 4.0 scale)
-      const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
-      
-      // Normalize entrance score to percentage (out of 600)
-      const entrancePercentage = (entranceScore / 600) * 100;
-      
-      // Calculate weighted total (adjust weights as needed)
-      // Example: 50% from GPA/CGPA and 50% from entrance exam
-      let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
-      if(student.gender==='Female'){
-        totalScore +=5
-      }
-      const emergingRegions = [
-        "Afar",
-        "Benishangul-Gumuz",
-        "Gambela",
-        "Somali"
-      ];
 
-      // check if student's region is exactly one of them
-      if (emergingRegions.includes(student.region)) {
-        totalScore += 5;
+    // === APPLY ONLY PROVIDED FIELDS ===
+    if (updates.studentId !== undefined) student.studentId = updates.studentId;
+    if (updates.firstName !== undefined) student.firstName = updates.firstName;
+    if (updates.middleName !== undefined) student.middleName = updates.middleName;
+    if (updates.gender !== undefined) student.gender = updates.gender;
+    if (updates.stream !== undefined) student.stream = updates.stream;
+
+    // GPA + Entrance Score (optional)
+    if (updates.gpaOrcgpa !== undefined) student.gpa = updates.gpaOrcgpa;
+    if (updates.entranceScore !== undefined) student.entranceScore = updates.entranceScore;
+
+    // Recalculate totalScore only if grades were updated
+    if (updates.gpaOrcgpa !== undefined || updates.entranceScore !== undefined) {
+      function calculateTotalScore(gpaOrcgpa, entranceScore) {
+        const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+        const entrancePercentage = (entranceScore / 600) * 100;
+
+        let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+
+        if (student.gender === 'Female') totalScore += 5;
+
+        const emergingRegions = ["Afar", "Benishangul-Gumuz", "Gambela", "Somali"];
+        if (emergingRegions.includes(student.region)) totalScore += 5;
+
+        if (student.disability !== 'none') totalScore += 10;
+
+        return Math.round(totalScore * 100) / 100;
       }
-      if(student.disability!=='none'){
-       totalScore +=10 
-      }
-      return Math.round(totalScore * 100) / 100; // Round to 2 decimal places
+
+      student.totalScore = calculateTotalScore(
+        student.gpa,
+        student.entranceScore
+      );
     }
 
-    // Calculate total score
-    const totalScore = calculateTotalScore(gpaOrcgpa, entranceScore);
-
-    // Update student grades
-    student.gpa = gpaOrcgpa;
-    student.entranceScore = entranceScore;
-    student.totalScore = totalScore;
     const updatedStudent = await student.save();
-    
+
     res.json({
-      message: 'Grades updated successfully',
+      message: 'Student updated successfully',
       student: updatedStudent
     });
+
   } catch (error) {
-    console.error('Error updating grades:', error);
-    res.status(400).json({ 
-      message: 'Failed to update grades',
-      error: error.message 
-    });
+    console.error('Error updating student:', error);
+    res.status(400).json({ message: error.message });
   }
 });
 

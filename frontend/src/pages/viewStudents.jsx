@@ -210,7 +210,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AddGradesModal from '../components/addGrades';
-import UpdateGradesModal from '../components/updateGrades';
+import UpdateStudent from '../components/UpdateStudents';
 
 const ViewStudents = () => {
   const [students, setStudents] = useState([]);
@@ -381,7 +381,7 @@ const ViewStudents = () => {
       )}
 
       {modalType === 'update' && selectedStudent && (
-        <UpdateGradesModal
+        <UpdateStudent
           student={selectedStudent}
           onClose={handleCloseModal}
           onSuccess={handleSuccess}
