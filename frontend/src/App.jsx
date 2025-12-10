@@ -69,7 +69,7 @@ function App() {
       <Route element={<PrivateRoute allowedRoles={["registrar"]} />}>
           <Route element={<RegistrarLayout />}>
               <Route path="/registrar/dashboard" element={<RegistrarDashboard/>}/>
-              {/* <Route path="/registrar/import/students" element={<ImportStudents/>}/> */}
+              <Route path="/registrar/import/students" element={<ImportStudents/>}/>
               <Route path="/registrar/create-students" element={<CreateStudent/>}/>
               <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
           </Route>
