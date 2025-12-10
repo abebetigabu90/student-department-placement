@@ -8,12 +8,13 @@ import Admin from '../models/Admin.js';
 import Preference from '../models/preferences.js'
 import Department from '../models/Department.js'
 import PreferenceSetting from '../models/PreferenceSetting.js'
+import { loginRateLimiter } from "../middleware/rateLimiter.js"
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 const router = express.Router();
 
 // ✅ Admin login route
-router.post('/login',async(req,res)=>{
+router.post('/login',loginRateLimiter,async(req,res)=>{
     try {
     const { email, password } = req.body;
 

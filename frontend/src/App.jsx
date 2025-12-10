@@ -69,7 +69,7 @@ function App() {
       <Route element={<PrivateRoute allowedRoles={["registrar"]} />}>
           <Route element={<RegistrarLayout />}>
               <Route path="/registrar/dashboard" element={<RegistrarDashboard/>}/>
-              <Route path="/registrar/import/students" element={<ImportStudents/>}/>
+              {/* <Route path="/registrar/import/students" element={<ImportStudents/>}/> */}
               <Route path="/registrar/create-students" element={<CreateStudent/>}/>
               <Route path="/admin/viewStudents" element={<ViewStudents/>}/>
           </Route>
@@ -82,8 +82,8 @@ function App() {
                 <Route path="/admin/runNaturalFistSemPlacement" element={<FirstSemPlacement/>}/>
                 <Route path="/admin/runSocialFistSemPlacement" element={<SocialFirstSem/>}/>
                 <Route path="/admin/runPreEngineeringPlacement" element={<PreEngineeringPlacement/>}/>
-                <Route path="/admin/runOtherNaturalPlacement" element={<OtherNaturalPlacement/>}/>
-                <Route path="/admin/runOtherSocialPlacement" element={<OtherSocialPlacement/>}/>
+                {/* <Route path="/admin/runOtherNaturalPlacement" element={<OtherNaturalPlacement/>}/> */}
+                {/* <Route path="/admin/runOtherSocialPlacement" element={<OtherSocialPlacement/>}/> */}
                 <Route path="/admin/view/preferences" element={<AdminPreferencesPage/>}/>
                 <Route path="/admin/view/placements" element={<ViewPlacements/>}/>
                 <Route path="/admin/preference/setting" element={<PreferenceSettingPage/>}/>

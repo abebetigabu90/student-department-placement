@@ -33,16 +33,16 @@ export default function AdminLayout() {
       label: "2nd Semister Pre Engineering Placement", 
       icon: "🔬"
     },
-    { 
-      path: "/admin/runOtherNaturalPlacement", 
-      label: "2nd Semister Other Natural Placement", 
-      icon: "🔬"
-    },
-    { 
-      path: "/admin/runOtherSocialPlacement", 
-      label: "2nd Semister Other Social Placement", 
-      icon: "🌍"
-    },
+    // { 
+    //   path: "/admin/runOtherNaturalPlacement", 
+    //   label: "2nd Semister Other Natural Placement", 
+    //   icon: "🔬"
+    // },
+    // { 
+    //   path: "/admin/runOtherSocialPlacement", 
+    //   label: "2nd Semister Other Social Placement", 
+    //   icon: "🌍"
+    // },
     { 
       path: "/admin/view/preferences", 
       label: "View Preferences", 

@@ -14,6 +14,7 @@ import Student from './src/models/student.js'
 import Registrar from './src/models/Registrar.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
+import { loginRateLimiter } from "./src/middleware/rateLimiter.js"
 dotenv.config();
 
 const app = express();
@@ -25,7 +26,7 @@ app.use('/api/student', studentRoutes);
 app.use('/api/admin/placement', placementRouter);
 app.use('/api/admin/setting',adminRoutes);
 //the ff api is used to check registrar login
-app.post('/api/registrar/login',async(req,res)=>{
+app.post('/api/registrar/login',loginRateLimiter,async(req,res)=>{
       try {
       const { email, password } = req.body;
   

@@ -3,6 +3,7 @@ import adminAuth from '../middleware/adminAuth.js';
 import Student from '../models/student.js'
 import Preference from '../models/preferences.js'
 import Department from '../models/Department.js'
+import { loginRateLimiter } from "../middleware/rateLimiter.js"
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import {
@@ -15,7 +16,7 @@ import {
 } from '../controllers/studentController.js';
 const router = express.Router();
 
-router.post('/login',async(req,res)=>{
+router.post('/login',loginRateLimiter,async(req,res)=>{
   try {
     const { studentId, password } = req.body;
 
