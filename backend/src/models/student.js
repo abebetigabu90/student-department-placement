@@ -84,18 +84,17 @@ disability: {
   type: Boolean,
   default:true
   },
-  // isPreEngineering: {
-  // type: Boolean,
-  // default:false
-  // },
-  // isOtherNatural: {
-  // type: Boolean,
-  // default:false
-  // },
-  // isOtherSocial: {
-  // type: Boolean,
-  // default:false
-  // }
+  isDeleted: {
+    type: Boolean,
+    default: false
+  },
+  deletedAt: {
+    type: Date
+  },
+  deletedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Registrar"
+  }
 },
  {
   timestamps: true

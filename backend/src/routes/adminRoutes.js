@@ -168,7 +168,7 @@ router.put('/preferenceSetting', async (req, res) => {
 // GET: fetch all students
 router.get('/viewStudents',async(req,res)=>{
 try {
-    const students = await Student.find().sort({ createdAt: -1 });
+    const students = await Student.find({ isDeleted: false }).sort({ createdAt: -1 });
     res.json(students);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -15,6 +15,7 @@ import Registrar from './src/models/Registrar.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
 import { loginRateLimiter } from "./src/middleware/rateLimiter.js"
+import AuditLog from './src/models/AuditLog.js'
 dotenv.config();
 
 const app = express();
@@ -729,8 +730,29 @@ app.get('/api/admin/view/students',async(req,res)=>{
 //the ff api of registrar used to delete student 
 app.delete('/api/registrar/delete/student/:id',async(req,res)=>{
   try {
-    await Student.findByIdAndDelete(req.params.id);
-    res.json({ message: 'Student deleted successfully' });
+    const studentId = req.params.id;
+    const userId  = req.body.userId;
+    const Role = req.body.Role; 
+  const student = await Student.findById(studentId);
+  if (!student) {
+    return res.status(404).json({ message: "Student not found" });
+  }
+  student.isDeleted = true;
+  student.deletedAt = new Date();
+  student.deletedBy = userId; // registrar
+  await student.save();
+  await AuditLog.create({
+    actorId: userId,
+    actorRole: Role,
+    action: "SOFT_DELETE_STUDENT",
+    targetModel: "Student",
+    targetId: student._id,
+    // reason
+  });
+
+  res.json({ message: "Student soft deleted successfully" });
+    // await Student.findByIdAndDelete(req.params.id);
+    // res.json({ message: 'Student deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting student' });
   }

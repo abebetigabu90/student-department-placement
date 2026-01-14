@@ -262,7 +262,23 @@ const ViewStudents = () => {
     if (!window.confirm("Are you sure you want to delete this student?")) return;
 
     try {
-      await axios.delete(`http://localhost:5000/api/registrar/delete/student/${studentId}`);
+      
+
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        console.log('User data not found');
+      }
+      const userData = JSON.parse(storedUserData);
+      const userId = userData._id;
+    
+      await axios.delete(`http://localhost:5000/api/registrar/delete/student/${studentId}`, {
+      data: {
+        userId: userId,
+        Role:'registrar'
+      }
+    });
+    
+      // await axios.delete(`http://localhost:5000/api/registrar/delete/student/${studentId}`);
       setStudents(students.filter((s) => s._id !== studentId)); // update UI instantly
     } catch (error) {
       console.error("Error deleting student:", error);

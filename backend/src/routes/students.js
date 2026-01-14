@@ -20,7 +20,8 @@ router.post('/login',loginRateLimiter,async(req,res)=>{
   try {
     const { studentId, password } = req.body;
 
-    const student = await Student.findOne({ studentId });
+    const student = await Student.findOne({ studentId ,isDeleted:false});
+    // const student = await Student.findOne({ studentId });
     if (!student) {
       return res.status(404).json({ success: false, message: "Student not found" });
     }
