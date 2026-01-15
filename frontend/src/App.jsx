@@ -40,6 +40,7 @@ import RegistrarLayout from './layouts/registrarLayout'
 import StudentLayout from './layouts/studentLayout'
 import AdminLayout from './layouts/adminLayout'
 import PublicLayout from './layouts/publicLayout'
+import AuditLogs from './pages/AuditLog'
 function App() {
   return (
 
@@ -90,6 +91,7 @@ function App() {
                 <Route path="/admin/clear/AllPlacements" element={<ClearPlacements/>}/>
                 <Route path="/admin/manage/departments" element={<DepartmentAdmin/>}/>
                 <Route path="/admin/manage/students" element={<ManageStudents/>}/>
+                <Route path="/admin/view/logs" element={<AuditLogs/>}/>
                 {/* AdminReportsPage */}
           </Route>
       </Route>

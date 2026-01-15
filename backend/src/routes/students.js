@@ -88,7 +88,7 @@ router.post('/preferences/:id',async(req,res)=>{
     }
 
     // Validate student exists - use findOne with studentId field
-    const student = await Student.findOne({ studentId: studentId });
+    const student = await Student.findOne({ studentId: studentId,isDeleted:false });
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }

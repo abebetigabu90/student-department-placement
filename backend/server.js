@@ -67,7 +67,7 @@ app.post('/logout',async(req,res)=>{
 app.get("/api/student/:id", async (req, res) => {
   try {
     // Use findOne with studentId field instead of findById
-    const student = await Student.findOne({ studentId: req.params.id });
+    const student = await Student.findOne({ studentId: req.params.id,isDeleted:false });
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
@@ -83,7 +83,7 @@ app.get('/api/departments/FirstSem/:id', async (req, res) => {
   const studentId = req.params.id;
 
   try {
-    const student = await Student.findOne({ studentId: studentId }).populate('Department');
+    const student = await Student.findOne({ studentId: studentId,isDeleted:false }).populate('Department');
     if (!student) {
       console.error(`Student not found: ${studentId}`);
       return res.status(404).json({ message: 'Student not found!' });
@@ -449,7 +449,7 @@ app.get('/api/admin/view/stuPreferences', async (req, res) => {
 app.get('/api/admin/viewAllPlacements',async(req,res)=>{
   try {
     const placedStudents = await Student.find({ 
-      Department: { $ne: null } 
+      Department: { $ne: null },isDeleted:false 
     })
     .populate('Department', 'name deptID')
     // .select('studentId firstName middleName gender gpa entranceScore totalScore Department')
@@ -755,6 +755,21 @@ app.delete('/api/registrar/delete/student/:id',async(req,res)=>{
     // res.json({ message: 'Student deleted successfully' });
   } catch (err) {
     res.status(500).json({ message: 'Error deleting student' });
+  }
+})
+//the ff api used to fetch audit log
+app.get('/api/admin/audit-logs',async(req,res)=>{
+    try {
+    const logs = await AuditLog.find()
+      .populate("actorId", "name email")
+      .sort({ createdAt: -1 });
+
+    res.status(200).json(logs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to load audit logs"
+    });
   }
 })
 const PORT = process.env.PORT || 5000;
