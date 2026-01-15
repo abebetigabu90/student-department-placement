@@ -332,31 +332,263 @@ app.post('/api/students/:id/grades', async (req, res) => {
 //     });
 //   }
 // });
+
+
+// app.patch('/api/students/:id', async (req, res) => {
+//   try {
+//     const updates = req.body.requestData;  // Only the fields sent from frontend
+//     const updatedFields = Object.keys(updates); // 👈 track changes
+//     const student = await Student.findById(req.params.id);
+
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found' });
+//     }
+
+//     // === APPLY ONLY PROVIDED FIELDS ===
+//     if (updates.studentId !== undefined) student.studentId = updates.studentId;
+//     if (updates.firstName !== undefined) student.firstName = updates.firstName;
+//     if (updates.middleName !== undefined) student.middleName = updates.middleName;
+//     if (updates.gender !== undefined) student.gender = updates.gender;
+//     if (updates.stream !== undefined) student.stream = updates.stream;
+
+//     // GPA + Entrance Score (optional)
+//     if (updates.gpaOrcgpa !== undefined) student.gpa = updates.gpaOrcgpa;
+//     if (updates.entranceScore !== undefined) student.entranceScore = updates.entranceScore;
+
+//     // Recalculate totalScore only if grades were updated
+//     if (updates.gpaOrcgpa !== undefined || updates.entranceScore !== undefined) {
+//       function calculateTotalScore(gpaOrcgpa, entranceScore) {
+//         const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+//         const entrancePercentage = (entranceScore / 600) * 100;
+
+//         let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+
+//         if (student.gender === 'Female') totalScore += 5;
+
+//         const emergingRegions = ["Afar", "Benishangul-Gumuz", "Gambela", "Somali"];
+//         if (emergingRegions.includes(student.region)) totalScore += 5;
+
+//         if (student.disability !== 'none') totalScore += 10;
+
+//         return Math.round(totalScore * 100) / 100;
+//       }
+
+//       student.totalScore = calculateTotalScore(
+//         student.gpa,
+//         student.entranceScore
+//       );
+//     }
+
+//     const updatedStudent = await student.save();
+
+// //==the ff code create Audit-log for the above update===
+//     await AuditLog.create({
+//       actorId: req.body.userId,          // registrar/admin
+//       actorRole: req.body.Role,      // "registrar" or "admin"
+//       action: "UPDATE_STUDENT",
+//       targetModel: "Student",
+//       targetId: student._id,
+//       changes: {
+//         updatedFields
+//       }
+//     // reason
+//   });
+//     res.json({
+//       message: 'Student updated successfully',
+//       student: updatedStudent
+//     });
+
+//   } catch (error) {
+//     console.error('Error updating student:', error);
+//     res.status(400).json({ message: error.message });
+//   }
+// });
+
+
+
+// app.patch('/api/students/:id', async (req, res) => {
+//   try {
+//     // const updates = req.body.requestData;  // Only the fields sent from frontend
+//     // const updatedFields = Object.keys(updates); // 👈 track changes
+//     // const student = await Student.findById(req.params.id);
+
+   
+//     const student = await Student.findById(req.params.id);
+//     if (!student) {
+//       return res.status(404).json({ message: 'Student not found' });
+//     }
+
+//     // Step 2: Get request data
+//     const requestData = req.body.requestData;
+//     const { userId, Role } = req.body;
+//     // Step 3: Find changed fields (your algorithm)
+//     const changedFields = [];
+//     const oldValues = {};
+//     const newValues = {};
+
+//     // Check each field in requestData against student's current values
+//     for (const field in requestData) {
+//       // Get values
+//       const requestValue = requestData[field];
+//       const studentValue = student[field];
+      
+//       // Check if value is different
+//       if (JSON.stringify(requestValue) !== JSON.stringify(studentValue)) {
+//                 // Add to changed fields
+//         changedFields.push(field);
+        
+//         // Store old value
+//         oldValues[field] = studentValue;
+        
+//         // Store new value
+//         newValues[field] = requestValue;
+        
+//         // Update student field
+//         student[field] = requestValue;
+//       }
+//     }
+//     // If no fields changed, return early
+//     if (changedFields.length === 0) {
+//       return res.json({
+//         message: 'No changes detected',
+//         student
+//       });
+//     }
+
+//     // if (!student) {
+//     //   return res.status(404).json({ message: 'Student not found' });
+//     // }
+
+
+//     // === APPLY ONLY PROVIDED FIELDS ===
+//     // if (updates.studentId !== undefined) student.studentId = updates.studentId;
+//     // if (updates.firstName !== undefined) student.firstName = updates.firstName;
+//     // if (updates.middleName !== undefined) student.middleName = updates.middleName;
+//     // if (updates.gender !== undefined) student.gender = updates.gender;
+//     // if (updates.stream !== undefined) student.stream = updates.stream;
+
+//     // GPA + Entrance Score (optional)
+//     if (requestData.gpaOrcgpa !== undefined) student.gpa = requestData.gpaOrcgpa;
+//     if (requestData.entranceScore !== undefined) student.entranceScore = requestData.entranceScore;
+
+//     // Recalculate totalScore only if grades were updated
+//     if (requestData.gpaOrcgpa !== undefined || requestData.entranceScore !== undefined) {
+//       function calculateTotalScore(gpaOrcgpa, entranceScore) {
+//         const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
+//         const entrancePercentage = (entranceScore / 600) * 100;
+
+//         let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
+
+//         if (student.gender === 'Female') totalScore += 5;
+
+//         const emergingRegions = ["Afar", "Benishangul-Gumuz", "Gambela", "Somali"];
+//         if (emergingRegions.includes(student.region)) totalScore += 5;
+
+//         if (student.disability !== 'none') totalScore += 10;
+
+//         return Math.round(totalScore * 100) / 100;
+//       }
+
+//       student.totalScore = calculateTotalScore(
+//         student.gpa,
+//         student.entranceScore
+//       );
+//     }
+
+//     const updatedStudent = await student.save();
+
+// //==the ff code create Audit-log for the above update===
+//     await AuditLog.create({
+//       actorId: req.body.userId,          // registrar/admin
+//       actorRole: req.body.Role,      // "registrar" or "admin"
+//       action: "UPDATE_STUDENT",
+//       targetModel: "Student",
+//       targetId: student._id,
+//       changes: {
+//         oldValues,
+//         newValues,
+//         changedFields
+//       }
+//     // reason
+//   });
+//     res.json({
+//       message: 'Student updated successfully',
+//       student: updatedStudent
+//     });
+
+//   } catch (error) {
+//     console.error('Error updating student:', error);
+//     res.status(400).json({ message: error.message });
+//   }
+// });
+
+
 app.patch('/api/students/:id', async (req, res) => {
   try {
-    const updates = req.body;  // Only the fields sent from frontend
     const student = await Student.findById(req.params.id);
-
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
-    // === APPLY ONLY PROVIDED FIELDS ===
-    if (updates.studentId !== undefined) student.studentId = updates.studentId;
-    if (updates.firstName !== undefined) student.firstName = updates.firstName;
-    if (updates.middleName !== undefined) student.middleName = updates.middleName;
-    if (updates.gender !== undefined) student.gender = updates.gender;
-    if (updates.stream !== undefined) student.stream = updates.stream;
+    const requestData = req.body.requestData;
+    const { userId, Role } = req.body;
 
-    // GPA + Entrance Score (optional)
-    if (updates.gpaOrcgpa !== undefined) student.gpa = updates.gpaOrcgpa;
-    if (updates.entranceScore !== undefined) student.entranceScore = updates.entranceScore;
+    // Track changed fields (only user-initiated changes)
+    const changedFields = [];
+    const oldValues = {};
+    const newValues = {};
+
+    // Field name mapping
+    const fieldMapping = {
+      'gpaOrcgpa': 'gpa'  // Frontend 'gpaOrcgpa' → Database 'gpa'
+    };
+
+    // Check each field in requestData against student's current values
+    for (const frontendField in requestData) {
+      // Determine the actual database field name
+      const dbField = fieldMapping[frontendField] || frontendField;
+      
+      const requestValue = requestData[frontendField];
+      const studentValue = student[dbField];
+      
+      // Check if value is different (only user-editable fields)
+      if (JSON.stringify(requestValue) !== JSON.stringify(studentValue)) {
+        // Add to changed fields
+        changedFields.push(dbField);
+        
+        // Store old value
+        oldValues[dbField] = studentValue;
+        
+        // Store new value
+        newValues[dbField] = requestValue;
+        
+        // Update student field
+        student[dbField] = requestValue;
+      }
+    }
+
+    // If no fields changed, return early
+    if (changedFields.length === 0) {
+      return res.json({
+        message: 'No changes detected',
+        student
+      });
+    }
+
+    // Check if GPA or Entrance Score were updated (to recalculate totalScore)
+    const gpaChanged = changedFields.includes('gpa');
+    const entranceScoreChanged = changedFields.includes('entranceScore');
 
     // Recalculate totalScore only if grades were updated
-    if (updates.gpaOrcgpa !== undefined || updates.entranceScore !== undefined) {
-      function calculateTotalScore(gpaOrcgpa, entranceScore) {
-        const gpaPercentage = (gpaOrcgpa / 4.0) * 100;
-        const entrancePercentage = (entranceScore / 600) * 100;
+    // This is an automatic calculation, not a user change
+    if (gpaChanged || entranceScoreChanged) {
+      function calculateTotalScore(gpa, entranceScore) {
+        // Use provided values or fall back to student's current values
+        const gpaValue = gpa !== undefined ? gpa : student.gpa;
+        const entranceValue = entranceScore !== undefined ? entranceScore : student.entranceScore;
+        
+        const gpaPercentage = (gpaValue / 4.0) * 100;
+        const entrancePercentage = (entranceValue / 600) * 100;
 
         let totalScore = (gpaPercentage * 0.5) + (entrancePercentage * 0.2);
 
@@ -365,22 +597,42 @@ app.patch('/api/students/:id', async (req, res) => {
         const emergingRegions = ["Afar", "Benishangul-Gumuz", "Gambela", "Somali"];
         if (emergingRegions.includes(student.region)) totalScore += 5;
 
-        if (student.disability !== 'none') totalScore += 10;
+        if (student.disability !== 'none') totalScore += 5;
 
         return Math.round(totalScore * 100) / 100;
       }
 
+      // Update totalScore (automatic calculation)
       student.totalScore = calculateTotalScore(
-        student.gpa,
-        student.entranceScore
+        gpaChanged ? requestData.gpaOrcgpa : undefined,
+        entranceScoreChanged ? requestData.entranceScore : undefined
       );
+      
+      // DON'T add totalScore to audit log - it's not a user change!
+      // It's automatically calculated based on other fields
     }
 
     const updatedStudent = await student.save();
 
+    // Create Audit-log (only user-initiated changes)
+    await AuditLog.create({
+      actorId: userId,
+      actorRole: Role,
+      action: "UPDATE_STUDENT",
+      targetModel: "Student",
+      targetId: student._id,
+      changes: {
+        oldValues,     // Only old values of user-changed fields
+        newValues,     // Only new values of user-changed fields
+        changedFields  // Only fields that user actually changed
+      }
+      // Note: totalScore is NOT included here since it's automatic
+    });
+
     res.json({
       message: 'Student updated successfully',
-      student: updatedStudent
+      student: updatedStudent,
+      changes: changedFields  // Show which fields the user changed
     });
 
   } catch (error) {
@@ -388,8 +640,6 @@ app.patch('/api/students/:id', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
-
 
 
 // routes/preferences.js
@@ -762,6 +1012,7 @@ app.get('/api/admin/audit-logs',async(req,res)=>{
     try {
     const logs = await AuditLog.find()
       .populate("actorId", "name email")
+      .populate("targetId","studentId")
       .sort({ createdAt: -1 });
 
     res.status(200).json(logs);

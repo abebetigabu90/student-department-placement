@@ -68,6 +68,11 @@ export default function AdminLayout() {
       label: "Manage Departments", 
       icon: "🏛️"
     },
+    {
+      path:"/admin/view/logs",
+      label:"Audit Logs",
+      icon:"🕵️‍♂️"
+    },
     { 
       path: "/admin/view/Reports", 
       label: "View Reports", 

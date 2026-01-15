@@ -204,9 +204,23 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
     if (formData.gpa !== '') requestData.gpaOrcgpa = parseFloat(formData.gpa);
     if (formData.entranceScore !== '') requestData.entranceScore = parseFloat(formData.entranceScore);
 
+
+
+      const storedUserData = localStorage.getItem('userData');
+      if (!storedUserData) {
+        console.log('User data not found');
+      }
+      const userData = JSON.parse(storedUserData);
+      const userId = userData._id;
+  
+
     await axios.patch(
       `http://localhost:5000/api/students/${student._id}`,
-      requestData
+      {
+        userId: userId,
+        Role:'registrar',
+        requestData:requestData
+    }
     );
 
     onSuccess();

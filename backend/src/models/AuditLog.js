@@ -64,11 +64,22 @@ const auditLogSchema = new mongoose.Schema(
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
       required: true
     },
     changes: {
-      updatedFields: [String]
-    }
+        changedFields: [{
+          type: String
+        }],
+        oldValues: {  // NEW
+          type: mongoose.Schema.Types.Mixed, // Can store any JSON
+          default: {}
+        },
+        newValues: {  // NEW
+          type: mongoose.Schema.Types.Mixed,
+          default: {}
+        }
+  },
   },
   { timestamps: true }
 );
