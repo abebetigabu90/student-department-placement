@@ -12,6 +12,7 @@ import Department from './src/models/Department.js'
 import Preference from './src/models/preferences.js'
 import Student from './src/models/student.js'
 import Registrar from './src/models/Registrar.js'
+import Admin from './src/models/Admin.js'
 import PreferenceSetting from './src/models/PreferenceSetting.js'
 import Placement from './src/models/Placement.js'
 import { loginRateLimiter } from "./src/middleware/rateLimiter.js"
@@ -1059,6 +1060,92 @@ app.patch('/api/students/:id/restore', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+
+// the ff is the advanced login api which used to check all users instead of the previous which was separate for each users
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    let user = null;
+    let userType = null;
+    let isDefaultPassword = false;
+
+    // 1️⃣ Check Student
+    user = await Student.findOne({ studentId: username });
+    if (user) {
+      userType = "student";
+    }
+
+    // 2️⃣ Check Admin
+    if (!user) {
+      user = await Admin.findOne({ email: username });
+      if (user) {
+        userType = "admin";
+      }
+    }
+
+    // 3️⃣ Check Registrar
+    if (!user) {
+      user = await Registrar.findOne({ email: username });
+      if (user) {
+        userType = "registrar";
+      }
+    }
+
+    // ❌ User not found
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid username or password",
+      });
+    }
+
+    // 🔐 Verify password FIRST
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid username or password",
+      });
+    }
+
+    // 🔁 Check default password ONLY for students
+    if (userType === "student") {
+      const defaultPassword = user.middleName.toLowerCase() + "123";
+      isDefaultPassword = await bcrypt.compare(
+        defaultPassword,
+        user.password
+      );
+    }
+
+    // 🎫 Generate token
+    const token = jwt.sign(
+      { id: user._id, role: userType },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      userType,
+      user,
+      isDefaultPassword,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+});
+
+
+
+
+
+
 
 const PORT = process.env.PORT || 5000;
 

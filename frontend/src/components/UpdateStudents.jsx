@@ -377,7 +377,7 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
               type="number"
               name="entranceScore"
               min="250"
-              max="700"
+              max="600"
               value={formData.entranceScore}
               onChange={handleInputChange}
               className="w-full border p-2 rounded"

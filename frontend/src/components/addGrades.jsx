@@ -86,7 +86,7 @@ const AddGradesModal = ({ student, onClose, onSuccess }) => {
                   id="gpaOrcgpa"
                   name="gpaOrcgpa"
                   step="0.01"
-                  min="0"
+                  min="1.51"
                   max="4.0"
                   value={formData.gpaOrcgpa}
                   onChange={handleInputChange}
@@ -104,7 +104,7 @@ const AddGradesModal = ({ student, onClose, onSuccess }) => {
                   type="number"
                   id="entranceScore"
                   name="entranceScore"
-                  min="0"
+                  min="250"
                   max="600"
                   value={formData.entranceScore}
                   onChange={handleInputChange}
