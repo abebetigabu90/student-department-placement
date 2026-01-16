@@ -617,6 +617,7 @@ app.patch('/api/students/:id', async (req, res) => {
     // Create Audit-log (only user-initiated changes)
     await AuditLog.create({
       actorId: userId,
+      actorModel: Role === "admin" ? "Admin" : "Registrar",
       actorRole: Role,
       action: "UPDATE_STUDENT",
       targetModel: "Student",
@@ -993,6 +994,7 @@ app.delete('/api/registrar/delete/student/:id',async(req,res)=>{
   await student.save();
   await AuditLog.create({
     actorId: userId,
+    actorModel: Role === "admin" ? "Admin" : "Registrar",
     actorRole: Role,
     action: "SOFT_DELETE_STUDENT",
     targetModel: "Student",
@@ -1012,7 +1014,7 @@ app.get('/api/admin/audit-logs',async(req,res)=>{
     try {
     const logs = await AuditLog.find()
       .populate("actorId", "name email")
-      .populate("targetId","studentId")
+      .populate("targetId","studentId isDeleted")
       .sort({ createdAt: -1 });
 
     res.status(200).json(logs);
@@ -1023,6 +1025,41 @@ app.get('/api/admin/audit-logs',async(req,res)=>{
     });
   }
 })
+
+// Example backend route for restoring soft-deleted students
+app.patch('/api/students/:id/restore', async (req, res) => {
+  try {
+    const student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { isDeleted: false, deletedAt: null, deletedBy:null },
+      { new: true }
+    );
+    
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    // Create audit log for restore action
+    await AuditLog.create({
+      actorId: req.body.userId,
+      actorModel: req.body.Role === "admin" ? "Admin" : "Registrar",
+      actorRole: req.body.Role,
+      action: "RESTORE_STUDENT",
+      targetModel: "Student",
+      targetId: student._id,
+      changes: {
+        oldValues: { isDeleted: true },
+        newValues: { isDeleted: false },
+        changedFields: ['isDeleted']
+      }
+    });
+    
+    res.json({ message: 'Student restored successfully', student });
+  } catch (error) {
+    console.error('Error restoring student:', error);
+    res.status(400).json({ message: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
 
 const startServer = async () => {

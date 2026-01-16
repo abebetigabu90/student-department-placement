@@ -44,10 +44,15 @@ import mongoose from "mongoose";
 
 const auditLogSchema = new mongoose.Schema(
   {
-    actorId: {
+      actorId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Registrar",
-      required: true
+      required: true,
+      refPath: "actorModel"
+    },
+    actorModel: {
+      type: String,
+      required: true,
+      enum: ["Registrar", "Admin"]
     },
     actorRole: {
       type: String,
