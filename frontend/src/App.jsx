@@ -15,6 +15,7 @@ import CreateStudent from './components/createStudents'
 import StudentDashboard from './pages/studentDashboard'
 import AdminDashboard from './pages/adminDashboard'
 import PrivateRoute from './components/privateRoute'
+import RequirePasswordChange from './components/RequirePasswordChange'
 import Unauthorized from './pages/unauthorized'
 import Logout from './pages/logout'
 import DepartmentPreferencePage from './pages/departmentPreferences'
@@ -58,11 +59,11 @@ function App() {
       {/* Student Protected Routes */}
       <Route element={<PrivateRoute allowedRoles={["student"]} />}>
           <Route element={<StudentLayout />}>
-              <Route path="/student/dashboard" element={<StudentDashboard/>}/>
-              <Route path="/student/departmentPreferences" element={<DepartmentPreferencePage/>}/>
-              <Route path="/ranking/:departmentName" element={<RankingPage />} />
-              <Route path="/my/preferences" element={<StudentPreferences />} />
-              <Route path="/my/placement" element={<MyPlacementPage />} />
+              <Route path="/student/dashboard" element={<RequirePasswordChange><StudentDashboard/></RequirePasswordChange>}/>
+              <Route path="/student/departmentPreferences" element={<RequirePasswordChange><DepartmentPreferencePage/></RequirePasswordChange>}/>
+              <Route path="/ranking/:departmentName" element={<RequirePasswordChange><RankingPage /></RequirePasswordChange>} />
+              <Route path="/my/preferences" element={<RequirePasswordChange><StudentPreferences /></RequirePasswordChange>} />
+              <Route path="/my/placement" element={<RequirePasswordChange><MyPlacementPage /></RequirePasswordChange>} />
               <Route path="/student/change-password" element={<ChangePasswordPage />} />
           </Route>
       </Route>

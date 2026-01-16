@@ -168,7 +168,13 @@ export default function LoginPage() {
         // alert("Login successful");
 
         // ✅ Redirect logic
-        if (response.data.isDefaultPassword) {
+        if (response.data.isDefaultPassword === true) {
+          //the ff code used to store isDefault password condition on the browser localstorege to protect other pages from students access by checking it
+              localStorage.setItem(
+              "isDefaultPassword",
+              response.data.isDefaultPassword
+            );
+
           navigate(`/${response.data.userType}/change-password`);
         } else {
           navigate(`/${response.data.userType}/dashboard`);
