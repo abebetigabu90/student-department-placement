@@ -105,7 +105,16 @@ export default function ChangePasswordPage() {
     if (newPassword !== confirmPassword) {
       return setMessage("Passwords do not match");
     }
+    // const isStrongPassword = (password) => {
+    //   const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
+    //   return regex.test(password);
+    // };
 
+    // if (!isStrongPassword(newPassword)) {
+    //     return setMessage(
+    //       "Password must be at least 8 characters and contain both letters and numbers."
+    //     );
+    //   }
     try {
       const response = await axios.post(
         "http://localhost:5000/api/student/change-password",

@@ -55,7 +55,15 @@ router.post('/login',loginRateLimiter,async(req,res)=>{
 router.post("/change-password", async (req, res) => {
   try {
     const { studentId, newPassword } = req.body;
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
 
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Password must be at least 8 characters and contain letters and numbers."
+      });
+    }
     if (!studentId || !newPassword) {
       return res.status(400).json({ success: false, message: "Missing studentId or new password" });
     }

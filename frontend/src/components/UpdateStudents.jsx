@@ -204,8 +204,29 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
     if (formData.gpa !== '') requestData.gpaOrcgpa = parseFloat(formData.gpa);
     if (formData.entranceScore !== '') requestData.entranceScore = parseFloat(formData.entranceScore);
 
+    // Name must contain only letters and spaces
+    const isValidName = (name) => {
+      return /^[A-Za-z\s]+$/.test(name.trim());
+    };
 
-
+    // ✅ First Name validation
+    if (formData.firstName !== '' && !isValidName(formData.firstName)) {
+      setError('First Name must contain only letters');
+      setLoading(false);
+      return;
+    }
+    // ✅ Middle Name validation
+    if (formData.middleName !== '' && !isValidName(formData.middleName)) {
+      setError('Middle Name must contain only letters');
+      setLoading(false);
+      return;
+    }
+    //     // ✅ Middle Name validation
+    // if (formData.lastName !== '' && !isValidName(formData.lastName)) {
+    //   setError('Middle Name must contain only letters');
+    //   setLoading(false);
+    //   return;
+    // }
       const storedUserData = localStorage.getItem('userData');
       if (!storedUserData) {
         console.log('User data not found');
@@ -322,7 +343,7 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
           </div>
 
           {/* GPA */}
-          <div>
+          {/* <div>
             <label className="block font-medium text-sm mb-1">GPA / CGPA</label>
             <input
               type="number"
@@ -332,7 +353,22 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
               onChange={handleInputChange}
               className="w-full border p-2 rounded"
             />
+
+          </div> */}
+          <div>
+            <label className="block font-medium text-sm mb-1">GPA / CGPA</label>
+            <input
+              type="number"
+              step="0.01"
+              name="gpa"
+              min="1.51"
+              max="4.0"
+              value={formData.gpa}
+              onChange={handleInputChange}
+              className="w-full border p-2 rounded"
+            />
           </div>
+
 
           {/* Entrance Score */}
           <div>
@@ -340,6 +376,8 @@ const UpdateStudent = ({ student, onClose, onSuccess }) => {
             <input
               type="number"
               name="entranceScore"
+              min="250"
+              max="700"
               value={formData.entranceScore}
               onChange={handleInputChange}
               className="w-full border p-2 rounded"
